@@ -1,0 +1,250 @@
+@import url("https://www.google.com/search?q=https://fonts.googleapis.com/css2%3Ffamily%3DPlus%2BJakarta%2BSans:ital,wght%400,200..800%3B1,200..800%26family%3DMontserrat:ital,wght%400,100..900%3B1,100..900%26family%3DPlayfair%2BDisplay:ital,wght%400,400..900%3B1,400..900%26family%3DPrata%26family%3DInter%26family%3DBebas%2BNeue%26family%3DPoppins:ital,wght%400,100%3B0,200%3B0,300%3B0,400%3B0,500%3B0,600%3B0,700%3B0,800%3B0,900%3B1,100%3B1,200%3B1,300%3B1,400%3B1,500%3B1,600%3B1,700%3B1,800%3B1,900%26display%3Dswap");
+
+@import url("https://fonts.googleapis.com/css2?family=Cookie&display=swap");
+
+/* Tailwind V4.0 */
+@import "tailwindcss";
+
+/* Dark-Mode Toggle manually */
+@variant dark (&:where(.dark, .dark *));
+
+/* on-special-cases */
+/* body {
+  background: #1b1b1b;
+  scroll-behavior: smooth;
+} */
+
+/* FONTS */
+
+/* Custom Fonts */
+
+
+@font-face {
+  font-family: "impact01";
+    src: url("/fonts/IMPACT.TTF") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+ } /* ← This is the fix */
+@font-face {
+  font-family: "montreal";
+    src: url("/fonts/NEUEMONTREAL-REGULAR.OTF") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* ← This is the fix */
+}
+
+.impact {
+  font-family: "impact01", sans-serif !important;
+}
+
+/* Google Fonts */
+* {
+  font-family: "montreal", "Plus Jakarta Sans", "poppins", "inter", sans-serif;
+}
+
+/* h1,
+h2,
+h3,
+h4 {
+  font-family: "poppins";
+} */
+
+.playfair-display {
+  font-family: "Playfair Display", serif;
+  font-weight: 400;
+  /* font-style: normal; */
+}
+
+.cookie-font {
+  font-family: "Cookie", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.montserrat {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+a.active hr {
+  display: block;
+}
+
+::-webkit-scrollbar {
+  display: none;
+  -webkit-scrollbar: none;
+}
+
+/* 🔷  Marquee Effect*/
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-1040%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  animation: marquee 150s linear infinite;
+  animation-play-state: var(--marquee-play-state, running);
+}
+
+/* --drop-shadow-3xl: 0 35px 35px rgba(0, 0, 0, 0.25);  */
+
+.color {
+  background-color: #ffebf5;
+  border-color: #c586a5;
+  color: #cc1379;
+}
+
+/* Git-Hub Black:  #0d1117 */
+
+/* Extending themes-example */
+@theme {
+  --color-prime-brown: #532822;
+  --color-prime-white: #fff4e9;
+  --color-prime-orange: #ff854b;
+  --color-prime-dark: #000;
+
+  --drop-shadow-3xl: 0 35px 35px rgba(0, 0, 0, 0.25);
+
+  /* Animations Extension */
+  --animate-wiggle: wiggle 2s ease-out infinite;
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(-3deg);
+    }
+    50% {
+      transform: rotate(3deg);
+    }
+  }
+
+  --animate-border: border 5s linear infinite;
+  @keyframes border {
+    0% {
+      border-color: rgb(56, 189, 248); /* Tailwind CSS sky-400 */
+    }
+    50% {
+      border-color: rgb(236, 72, 153);
+    }
+    75% {
+      border-color: #adfe02;
+    }
+    100% {
+      border-color: rgb(56, 189, 248);
+    }
+  }
+
+  --animate-scroll: scroll 40s linear infinite;
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+}
+
+/* CUSTOM_UTIITIES */
+/* @utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+} */
+
+@utility centered-row {
+  @apply flex items-center;
+}
+
+@utility mirror-x {
+  @apply transform scale-x-[-1];
+}
+@layer utilities {
+    .general-title {
+    @apply 2xl:text-[8.5rem] md:text-8xl text-5xl font-bold uppercase leading-[9vw] tracking-[-.35vw];
+  }
+
+}
+
+@layer components {
+  .btn-hover {
+    @apply hover:bg-transparent hover:border hover:border-zinc-600 hover:transition-all;
+  }
+
+  .heading-2 {
+    @apply text-6xl lg:text-9xl uppercase leading-tight mb-12;
+  }
+
+  .col {
+    @apply flex flex-col;
+  }
+
+  .transition2 {
+    @apply transition-all duration-300 cursor-pointer ease-out;
+  }
+
+  .glass {
+    @apply bg-[#0A0A0A]/80  border border-white/10;
+  }
+
+  .card-hover {
+    @apply hover:-translate-y-2 transition-all duration-300 cursor-pointer ease-in;
+  }
+
+  .black-text {
+    @apply text-zinc-500/90;
+  }
+
+  .line-bottom {
+    @apply border-b border-b-zinc-500/40;
+  }
+
+  .center-item {
+    @apply centered-row justify-center;
+  }
+
+  .grad-text {
+    @apply text-transparent bg-gradient-to-tr  bg-clip-text;
+  }
+
+  .grad1 {
+    @apply text-transparent bg-gradient-to-tr bg-clip-text from-indigo-100 to-indigo-400;
+  }
+
+  .link-hover {
+    @apply hover:font-bold hover:text-zinc-800 transition-all duration-300 ease-in-out hover:-translate-y-1;
+  }
+}
+
+/* If Needed try: Small-Screen SpecialCase Fix */
+@media (max-width: 380px) {
+  .test {
+    /* background: salmon; */
+    font-size: 75px;
+  }
+
+  .something {
+    /* background: chocolate; */
+    font-size: 16px;
+    width: 340px;
+    position: absolute;
+    bottom: -380px;
+    left: 5px;
+    gap: 10px;
+  }
+}
+
+/* Full HD Layout Tweaks: special-case */
+@media (min-width: 1920px) {
+  .hero-img {
+    /* background-color: #fff; */
+    width: 1024px;
+  }
+}
+
+

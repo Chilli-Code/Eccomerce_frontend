@@ -1,12 +1,31 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef,useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
-
+import { getStoreSettings } from "../lib/api";
 const LoaderHome = ({ onComplete }) => {
   const overlayRef = useRef(null);
   const line1Ref = useRef(null);
   const line2Ref = useRef(null);
+const [storeName, setStoreName] = useState(["Mobile", "Shop"]);
 
+useEffect(() => {
+  getStoreSettings()
+    .then(data => {
+      if (data?.storeName) {
+        const words = data.storeName.trim().split(" ");
+        if (words.length >= 2) {
+          setStoreName([words.slice(0, -1).join(" "), words[words.length - 1]]);
+        } else {
+          setStoreName([data.storeName, ""]);
+        }
+      }
+
+      if (data?.logoUrl) {
+        setLogoUrl(data.logoUrl);
+      }
+    })
+    .catch(() => {});
+}, []);
   useEffect(() => {
     const overlay = overlayRef.current;
     const line1 = line1Ref.current;
@@ -83,10 +102,10 @@ const LoaderHome = ({ onComplete }) => {
   }}
 >
       <h1 ref={line1Ref} style={textStyle}>
-        Mobile
-      </h1>
+        {storeName[0]}
+        </h1>
       <h1 ref={line2Ref} style={textStyle}>
-        Shop
+        {storeName[1]}
       </h1>
     </div>,
     document.body

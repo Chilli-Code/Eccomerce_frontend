@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef,useEffect, useLayoutEffect } from "react";
 import { Menu, X, Search, Smartphone, ShoppingCart, User, ChevronDown } from "lucide-react";
 import CartDrawer from "./CartDrawer";
 import AuthDrawer from "./Authdrawer";
@@ -6,10 +6,13 @@ import { navLinksData } from "../assets/data";
 import SearchDrawer from "./Searchdrawe";
 import gsap from "gsap";
 import { Link, useLocation } from "react-router-dom";
+import { getStoreSettings } from "../lib/api";
 
 const activeLinkClasses = "border-zinc-400 font-bold";
 
 const Header = () => {
+
+
   const { pathname } = useLocation();
   const activeLink = navLinksData.find((l) => l.href === pathname)?.name || "";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,6 +21,31 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const isOpen = useRef(false);
   const isAnimating = useRef(false);
+const [logoUrl, setLogoUrl] = useState(null);
+
+const [storeName, setStoreName] = useState(["Mobile", "Shop"]);
+
+
+useEffect(() => {
+  getStoreSettings()
+    .then(data => {
+      console.log("SETTINGS:", data); // 👈 verifica esto
+
+      if (data?.logoUrl) {
+        setLogoUrl(data.logoUrl);
+      }
+
+      if (data?.storeName) {
+        const words = data.storeName.trim().split(" ");
+        if (words.length >= 2) {
+          setStoreName([words.slice(0, -1).join(" "), words[words.length - 1]]);
+        } else {
+          setStoreName([data.storeName, ""]);
+        }
+      }
+    })
+    .catch(console.error);
+}, []);
 
   const menuOverlayRef   = useRef(null);
   const menuContentRef   = useRef(null);
@@ -28,6 +56,8 @@ const Header = () => {
   const linkRefs         = useRef([]); // apuntan al div wrapper, NO al <Link>
   const headerRef        = useRef(null);
 
+
+  
   useLayoutEffect(() => {
     gsap.set(menuIconCloseRef.current, { opacity: 0, rotate: -45, scale: 0.5 });
     gsap.set(menuOverlayRef.current,   { clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)" });
@@ -148,12 +178,28 @@ const Header = () => {
           <div className={`max-w-7xl mx-auto px-4 flex justify-between items-center p-4 transition-colors duration-300 ${menuOpen ? "" : "border border-zinc-200 bg-white rounded-2xl"}`}>
 
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <span ref={logoIconRef} style={{ color: "#18181b", display: "flex" }}><Smartphone size={24} /></span>
-              <a href="/" ref={logoTextRef} className="text-2xl impact tracking-tight" style={{ color: "#18181b" }}>
-                MOBILESHOP <sup>®</sup>
-              </a>
-            </div>
+<div className="flex items-center gap-2">
+  {logoUrl ? (
+    <img
+      src={logoUrl}
+      alt="logo"
+      className="h-8 w-auto object-contain"
+    />
+  ) : (
+    <span ref={logoIconRef} style={{ color: "#18181b", display: "flex" }}>
+      <Smartphone size={24} />
+    </span>
+  )}
+
+  <a
+    href="/"
+    ref={logoTextRef}
+    className="text-2xl impact tracking-tight"
+    style={{ color: "#18181b" }}
+  >
+    {storeName} <sup>®</sup>
+  </a>
+</div>
 
             {/* Nav desktop */}
             {!menuOpen && (

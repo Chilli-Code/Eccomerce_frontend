@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { couponsApi } from "../lib/api";
 
 const CartContext = createContext(null);
 
@@ -10,44 +11,152 @@ export function CartProvider({ children }) {
     catch { return []; }
   });
   const [open, setOpen] = useState(false);
+  
+  // Estado para el cupón aplicado
+  const [appliedCoupon, setAppliedCoupon] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("appliedCoupon") || "null"); }
+    catch { return null; }
+  });
 
-  // Persiste en localStorage
+  // Persiste carrito en localStorage
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(items));
   }, [items]);
 
-  const addItem = (product) => {
+  // Persiste cupón en localStorage
+  useEffect(() => {
+    if (appliedCoupon) {
+      localStorage.setItem("appliedCoupon", JSON.stringify(appliedCoupon));
+    } else {
+      localStorage.removeItem("appliedCoupon");
+    }
+  }, [appliedCoupon]);
+
+  const addItem = (product, selectedVariant = null) => {
+    const variantPrice = selectedVariant?.price 
+      ? Number(selectedVariant.price) 
+      : product.price;
+    
+    const variantName = selectedVariant?.name 
+      ? ` (${selectedVariant.name})` 
+      : "";
+
     setItems(prev => {
-      const existing = prev.find(i => i.id === product.id);
+      const existing = prev.find(
+        item => item.id === product.id && item.variantId === selectedVariant?.id
+      );
+      
       if (existing) {
-        return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+        return prev.map(item =>
+          item.id === product.id && item.variantId === selectedVariant?.id
+            ? { ...item, qty: item.qty + 1 }
+            : item
+        );
       }
+      
       return [...prev, {
-        id:    product.id,
-        name:  product.name,
-        price: Number(product.price),
-        img:   product.images?.[0] || product.img || "",
-        bg:    product.bgColor || BG_COLORS[prev.length % BG_COLORS.length],
-        brand: product.brand || "",
-        qty:   1,
+        id: product.id,
+        variantId: selectedVariant?.id ?? null, 
+        name: product.name + variantName,
+        price: variantPrice,
+        qty: 1,
+        img: product.images?.[0] || product.img,
+        brand: product.brand,
+        bg: product.bgColor || "#f5f5f5",
       }];
     });
-    setOpen(true);
+  };
+  
+  const removeItem = (id, variantId = null) => {
+    setItems(prev =>
+      prev.filter(item => {
+        const itemVariantId = item.variantId ?? null;
+        const targetVariantId = variantId ?? null;
+        return !(item.id === id && itemVariantId === targetVariantId);
+      })
+    );
   };
 
-  const removeItem  = (id) => setItems(prev => prev.filter(i => i.id !== id));
-  const updateQty   = (id, qty) => {
-    if (qty < 1) return removeItem(id);
-    setItems(prev => prev.map(i => i.id === id ? { ...i, qty } : i));
+  const updateQty = (id, qty, variantId = null) => {
+    if (qty < 1) {
+      removeItem(id, variantId);
+      return;
+    }
+    setItems(prev =>
+      prev.map(item => {
+        const itemVariantId = item.variantId ?? null;
+        const targetVariantId = variantId ?? null;
+        
+        if (item.id === id && itemVariantId === targetVariantId) {
+          return { ...item, qty };
+        }
+        return item;
+      })
+    );
   };
-  const clearCart   = () => setItems([]);
-  const total       = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const count       = items.reduce((s, i) => s + i.qty, 0);
+
+  const clearCart = () => {
+    setItems([]);
+    setAppliedCoupon(null); // Limpiar cupón también
+  };
+  
+  // Cálculo de totales
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    
+    if (appliedCoupon.type === "percentage") {
+      return subtotal * (appliedCoupon.value / 100);
+    } else if (appliedCoupon.type === "fixed") {
+      return appliedCoupon.value;
+    }
+    return 0;
+  };
+  
+  const discount = calculateDiscount();
+  const finalTotal = subtotal - discount;
+  const count = items.reduce((s, i) => s + i.qty, 0);
+  
+  // Función para aplicar cupón
+  const applyCoupon = async (code) => {
+    try {
+      const result = await couponsApi.validate(code, subtotal);
+      if (result.valid) {
+        setAppliedCoupon(result.coupon);
+        return { success: true, coupon: result.coupon };
+      }
+      return { success: false, error: result.error };
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      return { success: false, error: error.message };
+    }
+  };
+  
+  // Función para remover cupón
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+  };
 
   return (
-    <CartContext.Provider value={{ items, open, setOpen, addItem, removeItem, updateQty, clearCart, total, count }}>
-      {children}
-    </CartContext.Provider>
+  <CartContext.Provider value={{ 
+    items, 
+    open, 
+    setOpen, 
+    addItem, 
+    removeItem, 
+    updateQty, 
+    clearCart, 
+    subtotal: subtotal || 0,     // 👈 Valor por defecto
+    discount: discount || 0,     // 👈 Valor por defecto
+    finalTotal: finalTotal || 0, // 👈 Valor por defecto
+    count: count || 0,
+    appliedCoupon: appliedCoupon || null,
+    applyCoupon,
+    removeCoupon
+  }}>
+    {children}
+  </CartContext.Provider>
   );
 }
 

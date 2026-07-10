@@ -108,7 +108,7 @@ const HeroSection = () => {
             {/* Tarjeta 1 — flagship */}
             <div className="relative h-[230px] bg-zinc-800 rounded-3xl flex items-end p-3 overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=600&q=80"
+                src="https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=300&q=70&fm=webp"
                 alt="Teléfono insignia"
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -121,7 +121,7 @@ const HeroSection = () => {
             {/* Tarjeta 2 — accesorios */}
             <div className="relative h-[230px] bg-zinc-700 rounded-3xl flex items-end p-3 overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&q=80"
+                src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&q=70&fm=webp"
                 alt="Accesorios inalámbricos"
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -153,6 +153,8 @@ const HeroSection = () => {
                 <img
                   src={product.img}
                   alt={product.name}
+                    oading="lazy"
+                  decoding="async"
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </SwiperSlide>

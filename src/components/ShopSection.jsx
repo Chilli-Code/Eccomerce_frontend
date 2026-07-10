@@ -2,17 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProducts, getCategories } from "../lib/api.js";
 import ProductCard from "./ui/ProductCard";
-
+import AuthDrawer from "./Authdrawer.jsx";
 const PER_PAGE = 6;
 const BG_COLORS = ["#f5f5f5","#e8e4de","#1c1c1e","#d6e4f0","#e8f4e8","#2c2c2e"];
 
-const ShopSection = ({ onAddToCart }) => {
+const ShopSection = ({ onAddToCart, onAuthSuccess, onLogout, user }) => {
   const [products,     setProducts]     = useState([]);
   const [categories,   setCategories]   = useState([]);
   const [activeFilter, setActiveFilter] = useState("TODOS");
   const [page,         setPage]         = useState(1);
   const [total,        setTotal]        = useState(0);
   const [loading,      setLoading]      = useState(true);
+  const [authOpen, setAuthOpen] = useState(false);
   const navigate = useNavigate();
 
   // Carga categorías una sola vez
@@ -21,29 +22,30 @@ const ShopSection = ({ onAddToCart }) => {
   }, []);
 
   // Carga productos cuando cambia filtro o página
-useEffect(() => {
-  setLoading(true);
-  const params = {
-    limit: PER_PAGE,
-    page,
-    status: "active",
-    ...(activeFilter !== "TODOS" ? { categoryId: activeFilter } : {}),
-  };
-  getProducts(params)
-    .then(data => {
-      if (Array.isArray(data)) {
-        setProducts(data);
-        setTotal(data.length);
-      } else {
-        setProducts(data.items || []);
-        setTotal(data.total  || 0);
-      }
-    })
-    .catch((err) => {
-      console.error("❌ Error al cargar productos:", err); // ← y esto
-    })
-    .finally(() => setLoading(false));
-}, [activeFilter, page]);
+  useEffect(() => {
+    setLoading(true);
+    const params = {
+      limit: PER_PAGE,
+      page,
+      status: "active",
+      ...(activeFilter !== "TODOS" ? { categoryId: activeFilter } : {}),
+    };
+    getProducts(params)
+      .then(data => {
+        if (Array.isArray(data)) {
+          setProducts(data);
+          setTotal(data.length);
+        } else {
+          setProducts(data.items || []);
+          setTotal(data.total  || 0);
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Error al cargar productos:", err);
+      })
+      .finally(() => setLoading(false));
+  }, [activeFilter, page]);
+  
   const totalPages = Math.ceil(total / PER_PAGE);
 
   return (
@@ -105,6 +107,8 @@ useEffect(() => {
                 }}
                 onView={() => navigate(`/producto/${product.id}`)}
                 onAdd={() => onAddToCart?.(product)}
+                onAuthRequired={() => setAuthOpen(true)}
+                user={user}  // 👈 AGREGAR ESTO - PASAR USER AL PRODUCT CARD
               />
             ))}
           </div>
@@ -137,11 +141,18 @@ useEffect(() => {
 
       {/* Ver todos */}
       <div className="flex justify-center items-center mt-8">
-        <a href="/product"
+        <a href="/products"
           className="bg-zinc-900 text-white uppercase px-10 py-4 flex items-center justify-center rounded-full font-bold tracking-widest text-sm cursor-pointer hover:bg-zinc-700 transition-colors">
           VER MAS
         </a>
       </div>
+      
+      <AuthDrawer
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onAuthSuccess={onAuthSuccess}  // 👈 SOLO PASAR onAuthSuccess
+        // NO PASES user y onLogout porque AuthDrawer usa su propio contexto
+      />
     </div>
   );
 };

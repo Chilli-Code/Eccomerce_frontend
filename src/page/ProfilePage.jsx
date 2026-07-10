@@ -5,6 +5,8 @@ import {
   Save, X, Home, Briefcase, Truck, ChevronRight, LogOut, Heart,
   Package, ShoppingBag, ShieldCheck
 } from "lucide-react";
+import AddressInput from "../components/AddressInput";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 import { useAuth } from "../context/AuthContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useCart } from "../context/CartContext";
@@ -485,29 +487,16 @@ const [orders, setOrders] = useState([]);
                         onChange={(e) => setAddressForm({ ...addressForm, name: e.target.value })}
                         className="w-full px-4 py-2 border border-zinc-200 rounded-xl text-sm"
                       />
-                      <input
-                        type="text"
-                        placeholder="Calle y número"
+                      <AddressInput
                         value={addressForm.street}
-                        onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
-                        className="w-full px-4 py-2 border border-zinc-200 rounded-xl text-sm"
+                        onChange={(val) => setAddressForm({ ...addressForm, street: val })}
                       />
-                      <div className="grid grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          placeholder="Ciudad"
-                          value={addressForm.city}
-                          onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                          className="px-4 py-2 border border-zinc-200 rounded-xl text-sm"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Departamento"
-                          value={addressForm.state}
-                          onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
-                          className="px-4 py-2 border border-zinc-200 rounded-xl text-sm"
-                        />
-                      </div>
+                      <LocationAutocomplete
+                        department={addressForm.state}
+                        city={addressForm.city}
+                        onDepartmentChange={(val) => setAddressForm({ ...addressForm, state: val })}
+                        onCityChange={(val) => setAddressForm({ ...addressForm, city: val })}
+                      />
                       <input
                         type="text"
                         placeholder="Código postal"

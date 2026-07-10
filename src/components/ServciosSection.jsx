@@ -28,7 +28,7 @@ const services = [
     title: "Accesorios & Protección",
     desc: "Fundas, cargadores MagSafe, protectores de pantalla y audífonos. Todo lo que tu iPhone necesita en un solo lugar.",
     tag: "Tienda",
-    href: "/product",
+    href: "/products",
     icon: <AccesoriosIcon />,
   },
 ];

@@ -247,4 +247,72 @@ a.active hr {
   }
 }
 
+/* Estilos para listas en la descripción del producto */
+.product-description ul,
+.product-description ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+
+.product-description ul {
+  list-style-type: disc;
+}
+
+.product-description ol {
+  list-style-type: decimal;
+}
+
+.product-description li {
+  margin: 0.25em 0;
+}
+
+/* Estilos para el marcador/colores */
+.product-description mark {
+  background-color: #ffeb3b; /* fallback */
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Estilos para texto con color */
+.product-description [style*="color"] {
+  /* Mantiene el color inline */
+}
+
+/* Estilos para mejor legibilidad */
+.product-description p {
+  margin-bottom: 1em;
+}
+
+.product-description strong {
+  font-weight: bold;
+}
+
+.product-description em {
+  font-style: italic;
+}
+
+.product-description h1 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 1em 0 0.5em;
+}
+
+.product-description h2 {
+  font-size: 1.3em;
+  font-weight: bold;
+  margin: 0.8em 0 0.4em;
+}
+
+.product-description h3 {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin: 0.6em 0 0.3em;
+}
+
+.product-description h4 {
+  font-size: 1em;
+  font-weight: bold;
+  margin: 0.5em 0 0.25em;
+}
+
 

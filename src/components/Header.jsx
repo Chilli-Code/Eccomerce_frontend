@@ -1,4 +1,4 @@
-import { useState, useRef,useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Menu, X, Search, Smartphone, ShoppingCart, User, ChevronDown } from "lucide-react";
 import CartDrawer from "./CartDrawer";
 import AuthDrawer from "./Authdrawer";
@@ -7,62 +7,62 @@ import SearchDrawer from "./Searchdrawe";
 import gsap from "gsap";
 import { Link, useLocation } from "react-router-dom";
 import { getStoreSettings } from "../lib/api";
+import { useCart } from "../context/CartContext";
 
 const activeLinkClasses = "border-zinc-400 font-bold";
 
-const Header = () => {
+const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
 
 
   const { pathname } = useLocation();
   const activeLink = navLinksData.find((l) => l.href === pathname)?.name || "";
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
+  const { count, setOpen: setCartOpen } = useCart();
   const [authOpen, setAuthOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const isOpen = useRef(false);
   const isAnimating = useRef(false);
-const [logoUrl, setLogoUrl] = useState(null);
+  const [logoUrl, setLogoUrl] = useState(null);
 
-const [storeName, setStoreName] = useState(["Mobile", "Shop"]);
+  const [storeName, setStoreName] = useState(["Mobile", "Shop"]);
 
 
-useEffect(() => {
-  getStoreSettings()
-    .then(data => {
-      console.log("SETTINGS:", data); // 👈 verifica esto
+  useEffect(() => {
+    getStoreSettings()
+      .then(data => {
 
-      if (data?.logoUrl) {
-        setLogoUrl(data.logoUrl);
-      }
-
-      if (data?.storeName) {
-        const words = data.storeName.trim().split(" ");
-        if (words.length >= 2) {
-          setStoreName([words.slice(0, -1).join(" "), words[words.length - 1]]);
-        } else {
-          setStoreName([data.storeName, ""]);
+        if (data?.logoUrl) {
+          setLogoUrl(data.logoUrl);
         }
-      }
-    })
-    .catch(console.error);
-}, []);
 
-  const menuOverlayRef   = useRef(null);
-  const menuContentRef   = useRef(null);
-  const menuIconOpenRef  = useRef(null);
+        if (data?.storeName) {
+          const words = data.storeName.trim().split(" ");
+          if (words.length >= 2) {
+            setStoreName([words.slice(0, -1).join(" "), words[words.length - 1]]);
+          } else {
+            setStoreName([data.storeName, ""]);
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const menuOverlayRef = useRef(null);
+  const menuContentRef = useRef(null);
+  const menuIconOpenRef = useRef(null);
   const menuIconCloseRef = useRef(null);
-  const logoTextRef      = useRef(null);
-  const logoIconRef      = useRef(null);
-  const linkRefs         = useRef([]); // apuntan al div wrapper, NO al <Link>
-  const headerRef        = useRef(null);
+  const logoTextRef = useRef(null);
+  const logoIconRef = useRef(null);
+  const linkRefs = useRef([]); // apuntan al div wrapper, NO al <Link>
+  const headerRef = useRef(null);
 
 
-  
+
   useLayoutEffect(() => {
     gsap.set(menuIconCloseRef.current, { opacity: 0, rotate: -45, scale: 0.5 });
-    gsap.set(menuOverlayRef.current,   { clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)" });
-    gsap.set(menuContentRef.current,   { x: -50, y: -30, scale: 1.2, rotate: -8, opacity: 0 });
-    gsap.set(linkRefs.current,         { y: "120%", opacity: 0.25 });
+    gsap.set(menuOverlayRef.current, { clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)" });
+    gsap.set(menuContentRef.current, { x: -50, y: -30, scale: 1.2, rotate: -8, opacity: 0 });
+    gsap.set(linkRefs.current, { y: "120%", opacity: 0.25 });
   }, []);
 
   const openMenu = () => {
@@ -73,11 +73,11 @@ useEffect(() => {
     document.documentElement.style.overflow = "hidden";
     if (window.__smoother) window.__smoother.paused(true);
 
-    gsap.to(menuIconOpenRef.current,  { opacity: 0, scale: 0.4, rotate: 90, duration: 0.25, ease: "power2.in" });
+    gsap.to(menuIconOpenRef.current, { opacity: 0, scale: 0.4, rotate: 90, duration: 0.25, ease: "power2.in" });
     gsap.to(menuIconCloseRef.current, { opacity: 1, scale: 1, rotate: 0, duration: 0.4, delay: 0.2, ease: "back.out(2)" });
     gsap.to([logoTextRef.current, logoIconRef.current], { color: "#ffffff", duration: 0.4, delay: 0.3 });
-    gsap.to(menuOverlayRef.current,   { clipPath: "polygon(0% 0%, 100% 0%, 100% 176%, 0% 100%)", duration: 1.25, ease: "power4.inOut" });
-    gsap.to(menuContentRef.current,   { x: 0, y: 0, scale: 1, rotate: 0, opacity: 1, duration: 1.25, ease: "power4.inOut" });
+    gsap.to(menuOverlayRef.current, { clipPath: "polygon(0% 0%, 100% 0%, 100% 176%, 0% 100%)", duration: 1.25, ease: "power4.inOut" });
+    gsap.to(menuContentRef.current, { x: 0, y: 0, scale: 1, rotate: 0, opacity: 1, duration: 1.25, ease: "power4.inOut" });
     gsap.to(linkRefs.current, {
       y: "0%", opacity: 1, duration: 1, delay: 0.75, stagger: 0.1, ease: "power3.out",
       onComplete: () => { isOpen.current = true; isAnimating.current = false; },
@@ -86,12 +86,13 @@ useEffect(() => {
 
   const closeMenu = () => {
     if (isAnimating.current || !isOpen.current) return;
+    if (window.__smoother) window.__smoother.paused(false);
     isAnimating.current = true;
 
     gsap.to(menuIconCloseRef.current, { opacity: 0, scale: 0.4, rotate: 90, duration: 0.25, ease: "power2.in" });
-    gsap.to(menuIconOpenRef.current,  { opacity: 1, scale: 1, rotate: 0, duration: 0.4, delay: 0.2, ease: "back.out(2)" });
+    gsap.to(menuIconOpenRef.current, { opacity: 1, scale: 1, rotate: 0, duration: 0.4, delay: 0.2, ease: "back.out(2)" });
     gsap.to([logoTextRef.current, logoIconRef.current], { color: "#18181b", duration: 0.4, delay: 0.5 });
-    gsap.to(menuContentRef.current,   { x: -50, y: -30, scale: 1.2, rotate: -8, opacity: 0, duration: 0.9, delay: 0.1, ease: "power4.inOut" });
+    gsap.to(menuContentRef.current, { x: -50, y: -30, scale: 1.2, rotate: -8, opacity: 0, duration: 0.9, delay: 0.1, ease: "power4.inOut" });
     gsap.to(menuOverlayRef.current, {
       clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)", duration: 0.9, delay: 0.15, ease: "power4.inOut",
       onComplete: () => {
@@ -118,7 +119,7 @@ useEffect(() => {
       >
         <div
           ref={menuContentRef}
-          className="flex flex-col justify-center min-h-full px-8"
+          className="flex flex-col justify-center min-h-full px-8 overflow-y-auto"
           style={{ transformOrigin: "left bottom", willChange: "transform, opacity", overflow: "hidden" }}
         >
           <div className="flex flex-col h-full gap-12 px-8">
@@ -178,28 +179,31 @@ useEffect(() => {
           <div className={`max-w-7xl mx-auto px-4 flex justify-between items-center p-4 transition-colors duration-300 ${menuOpen ? "" : "border border-zinc-200 bg-white rounded-2xl"}`}>
 
             {/* Logo */}
-<div className="flex items-center gap-2">
-  {logoUrl ? (
-    <img
-      src={logoUrl}
-      alt="logo"
-      className="h-8 w-auto object-contain"
-    />
-  ) : (
-    <span ref={logoIconRef} style={{ color: "#18181b", display: "flex" }}>
-      <Smartphone size={24} />
-    </span>
-  )}
+            <div className="flex items-center gap-2">
+              {logoUrl ? (
+                <div className="w-9 h-9 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={logoUrl}
+                    alt="logo"
+                    className="w-full h-full object-contain"
+                    style={{ maxWidth: "100%", maxHeight: "100%" }}
+                  />
+                </div>
+              ) : (
+                <span ref={logoIconRef} style={{ color: "#18181b", display: "flex" }}>
+                  <Smartphone size={24} />
+                </span>
+              )}
 
-  <a
-    href="/"
-    ref={logoTextRef}
-    className="text-2xl impact tracking-tight"
-    style={{ color: "#18181b" }}
-  >
-    {storeName} <sup>®</sup>
-  </a>
-</div>
+              <a
+                href="/"
+                ref={logoTextRef}
+                className="text-2xl impact tracking-tight"
+                style={{ color: "#18181b" }}
+              >
+                {storeName} <sup>®</sup>
+              </a>
+            </div>
 
             {/* Nav desktop */}
             {!menuOpen && (
@@ -216,7 +220,7 @@ useEffect(() => {
                     ) : (
                       <Link
                         to={link.href}
-                        
+
                         className={`flex items-center gap-1 hover:text-zinc-900 hover:font-bold duration-200 transition-all border border-transparent hover:border-zinc-400 p-2 rounded-full ${activeLink === link.name ? activeLinkClasses : ""}`}
                       >
                         {link.name}
@@ -238,23 +242,23 @@ useEffect(() => {
             {/* Iconos */}
             <div className="flex items-center gap-3">
               <button onClick={() => setSearchOpen(true)} className={`${menuOpen ? "text-white" : "text-zinc-700"} hover:text-zinc-400 transition-colors`}><Search size={20} /></button>
-              <button onClick={() => setAuthOpen(true)}   className={`${menuOpen ? "text-white" : "text-zinc-700"} hover:text-zinc-400 transition-colors`}><User size={20} /></button>
-              <button onClick={() => setCartOpen(true)}   className={`relative transition-colors ${menuOpen ? "text-white" : "text-zinc-700"} hover:text-zinc-400`}>
+              <button onClick={() => setAuthOpen(true)} className={`${menuOpen ? "text-white" : "text-zinc-700"} hover:text-zinc-400 transition-colors`}><User size={20} /></button>
+              <button onClick={() => setCartOpen(true)} className={`relative transition-colors ${menuOpen ? "text-white" : "text-zinc-700"} hover:text-zinc-400`}>
                 <ShoppingCart size={20} />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{count}</span>
               </button>
               <button onClick={handleToggle} className="md:hidden relative w-6 h-6 flex items-center justify-center">
-                <span ref={menuIconOpenRef}  className="absolute text-zinc-700" style={{ willChange: "transform, opacity" }}><Menu size={22} /></span>
-                <span ref={menuIconCloseRef} className="absolute text-white"    style={{ willChange: "transform, opacity", opacity: 0 }}><X size={22} /></span>
+                <span ref={menuIconOpenRef} className="absolute text-zinc-700" style={{ willChange: "transform, opacity" }}><Menu size={22} /></span>
+                <span ref={menuIconCloseRef} className="absolute text-white" style={{ willChange: "transform, opacity", opacity: 0 }}><X size={22} /></span>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <CartDrawer   open={cartOpen}   onClose={() => setCartOpen(false)} cartItems={[]} />
-      <AuthDrawer   open={authOpen}   onClose={() => setAuthOpen(false)} />
-      <SearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <CartDrawer />
+      <AuthDrawer open={authOpen} onClose={() => setAuthOpen(false)} />
+      <SearchDrawer open={searchOpen} user={user} onAuthRequired={() => setAuthOpen(true)} onClose={() => setSearchOpen(false)} />
     </>
   );
 };

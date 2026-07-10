@@ -2,21 +2,21 @@
  const navLinksData = [
   {
     isActive: true,
-    name: "IPHONE",
-    href: "/product",
-    subMenu: ["iPhone 16", "iPhone 15", "iPhone 14", "iPhone 13", "Reacondicionados"],
+    name: "INICIO",
+    href: "/",
+    // subMenu: ["iPhone 16", "iPhone 15", "iPhone 14", "iPhone 13", "Reacondicionados"],
   },
   {
     isActive: false,
-    name: "ACCESORIOS",
-    href: "/product",
+    name: "PRODUCTOS",
+    href: "/products",
     subMenu: ["Fundas & Forros", "Cargadores MagSafe", "AirPods", "Protectores de pantalla"],
   },
   {
     isActive: false,
     name: "SERVICIOS",
-    href: "#services",
-    subMenu: ["Cambio de pantalla", "Batería", "Diagnóstico gratis", "Agua & golpes"],
+    href: "/#services",
+    // subMenu: ["Cambio de pantalla", "Batería", "Diagnóstico gratis", "Agua & golpes"],
   },
   {
     isActive: false,

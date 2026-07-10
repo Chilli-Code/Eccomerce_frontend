@@ -7,7 +7,7 @@ const SORT_OPTIONS = [
   { label: "Precio: mayor a menor", value: "price_desc" },
 ];
 
-const FilterPanel = ({ filterPanelRef, activeFilterCount, activeFilter, setActiveFilter, selectedBrands, toggleBrand, clearAll, sort, setSort, brands }) => {
+const FilterPanel = ({ filterPanelRef, activeCategoryName, activeFilterCount, activeFilter, setActiveFilter, selectedBrands, toggleBrand, clearAll, sort, setSort, brands }) => {
   return (
 <div
   ref={filterPanelRef}
@@ -26,7 +26,7 @@ const FilterPanel = ({ filterPanelRef, activeFilterCount, activeFilter, setActiv
             <div className="flex flex-wrap gap-2 mb-3">
               {activeFilter !== "TODOS" && (
                 <span className="flex items-center gap-1.5 border border-zinc-200 rounded-full px-3 py-1 text-xs font-medium">
-                  {activeFilter}
+                  {activeCategoryName || activeFilter}
                   <button onClick={() => setActiveFilter("TODOS")}><X size={11} /></button>
                 </span>
               )}

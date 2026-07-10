@@ -5,6 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import { addressApi, paymentApi, ordersApi } from "../lib/api";
 import { notify } from "../lib/notify";
 import StripePayment from "../components/StripePayment";
+import AddressInput from "../components/AddressInput";
+import LocationAutocomplete from "../components/LocationAutocomplete";
 import { MapPin, CreditCard, ChevronRight, Truck, Shield, RotateCcw } from "lucide-react";
 
 export default function CheckoutPage() {
@@ -191,29 +193,16 @@ const handlePaymentSuccess = async (paymentIntent) => {
                     onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
                     className="w-full px-4 py-2 border border-zinc-200 rounded-xl"
                   />
-                  <input
-                    type="text"
-                    placeholder="Calle y número"
+                  <AddressInput
                     value={newAddress.street}
-                    onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
-                    className="w-full px-4 py-2 border border-zinc-200 rounded-xl"
+                    onChange={(val) => setNewAddress({ ...newAddress, street: val })}
                   />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Ciudad"
-                      value={newAddress.city}
-                      onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                      className="px-4 py-2 border border-zinc-200 rounded-xl"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Departamento"
-                      value={newAddress.state}
-                      onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
-                      className="px-4 py-2 border border-zinc-200 rounded-xl"
-                    />
-                  </div>
+                  <LocationAutocomplete
+                    department={newAddress.state}
+                    city={newAddress.city}
+                    onDepartmentChange={(val) => setNewAddress({ ...newAddress, state: val })}
+                    onCityChange={(val) => setNewAddress({ ...newAddress, city: val })}
+                  />
                   <input
                     type="text"
                     placeholder="Código postal"

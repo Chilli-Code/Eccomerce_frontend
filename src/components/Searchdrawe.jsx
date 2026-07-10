@@ -4,77 +4,67 @@ import { X, Search, ShoppingCart, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { productData } from "../assets/data";
+import { getProducts, getCategories } from "../lib/api";
+import { useCart } from "../context/CartContext";
+import WishlistButton from "./ui/WishlistButton";
+import ProductCard from "./ui/ProductCard";
 
 const SUGGESTED = ["iPhone", "Samsung", "AirPods", "Smartwatch", "Auriculares", "Accesorios"];
 
-// ProductCard inline simplificada para el drawer
-const MiniCard = ({ product, onClose }) => {
-  const navigate = useNavigate();
-  const [added, setAdded] = useState(false);
-
-  const handleView = () => {
-    navigate(`/producto/${product.id}`);
-    onClose();
-  };
-
-  const handleAdd = (e) => {
-    e.stopPropagation();
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1800);
-  };
-
-  return (
-    <div className="flex flex-col group cursor-pointer" onClick={handleView}>
-      {/* Imagen */}
-      <div
-        className="relative w-full rounded-2xl mb-2 overflow-hidden"
-        style={{ backgroundColor: product.bg, aspectRatio: "4 / 5" }}
-      >
-        <img
-          src={product.img}
-          alt={product.name}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        {product.tag && (
-          <span className="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur-sm text-zinc-900 text-[10px] font-semibold px-2 py-1 rounded-full">
-            {product.tag}
-          </span>
-        )}
-        {/* Hover */}
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-2 z-10">
-          <button onClick={handleAdd}
-            className={`flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-5 py-2.5 rounded-full transition-all ${added ? "bg-green-500 text-white" : "bg-white text-zinc-900"}`}>
-            <ShoppingCart size={12} />
-            {added ? "¡Listo!" : "Agregar"}
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); handleView(); }}
-            className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-5 py-2.5 rounded-full bg-zinc-900 text-white hover:bg-zinc-700 transition-colors">
-            <Eye size={12} />
-            Ver
-          </button>
-        </div>
-      </div>
-      {/* Info */}
-      <p className="text-[10px] text-zinc-400 tracking-widest uppercase">{product.brand}</p>
-      <p className="text-sm font-bold text-zinc-900 leading-tight">{product.name}</p>
-      <p className="text-sm text-zinc-500">${product.price.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-    </div>
-  );
-};
 
 // ── SEARCH DRAWER ─────────────────────────────────────────
-const SearchDrawer = ({ open, onClose }) => {
-  const drawerRef  = useRef(null);
-  const inputRef   = useRef(null);
-  const [query, setQuery] = useState("");
+const SearchDrawer = ({ open, onClose, user, onAuthRequired }) => {
+  const navigate = useNavigate();
+  const drawerRef = useRef(null);
+  const inputRef = useRef(null);
+  const { addItem } = useCart();
 
-  const results = query.trim().length > 0
-    ? productData.filter((p) =>
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        p.brand.toLowerCase().includes(query.toLowerCase()) ||
-        p.category.toLowerCase().includes(query.toLowerCase())
-      )
-    : [];
+  const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
+  const [results, setResults] = useState([]);
+  const [featured, setFeatured] = useState([]); // más vendidos / ofertas
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+useEffect(() => {
+  if (open) {
+    window.__smoother?.paused(true);
+  } else {
+    window.__smoother?.paused(false);
+  }
+}, [open]);
+
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  useEffect(() => {
+    getCategories()
+      .then(data => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => { });
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query), 350);
+    return () => clearTimeout(t);
+  }, [query]);
+
+
+
+  useEffect(() => {
+    if (!debounced.trim()) { setResults([]); return; }
+    setLoading(true);
+    getProducts({ search: debounced, status: "active", limit: 9 })
+      .then(data => setResults(Array.isArray(data) ? data : data.items || []))
+      .catch(() => setResults([]))
+      .finally(() => setLoading(false));
+  }, [debounced]);
+
+
+
+  useEffect(() => {
+    getProducts({ status: "active", limit: 6, sort: "newest" })
+      .then(data => setFeatured(Array.isArray(data) ? data : data.items || []))
+      .catch(() => { });
+  }, []);
+
 
   useEffect(() => {
     if (!drawerRef.current) return;
@@ -108,8 +98,8 @@ const SearchDrawer = ({ open, onClose }) => {
         className="fixed top-0 right-0 h-full z-[70] bg-white flex flex-col shadow-2xl overflow-hidden"
         style={{ width: "min(560px, 100vw)", transform: "translateX(100%)" }}
       >
-  
-                  <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-100">
+
+        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-100">
           <h2 className="text-lg font-bold text-zinc-900">
             Buscar productos
           </h2>
@@ -121,7 +111,7 @@ const SearchDrawer = ({ open, onClose }) => {
         </div>
         {/* Search bar */}
 
-                  <div className="flex items-center gap-3 mt-4 px-5 py-4 border-b border-zinc-100 bg-zinc-100 rounded-xl  text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900 transition mb-2 mx-2">
+        <div className="flex items-center gap-3 mt-4 px-5 py-4 border-b border-zinc-100 bg-zinc-100 rounded-xl  text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900 transition mb-2 mx-2">
           <Search size={18} className="text-zinc-400 flex-shrink-0" />
           <input
             ref={inputRef}
@@ -138,16 +128,67 @@ const SearchDrawer = ({ open, onClose }) => {
         <div className="flex-1 overflow-y-auto px-5 py-6">
           {query.trim() === "" ? (
             <>
+              <p className="text-sm font-bold text-zinc-900 mb-4">Categorias</p>
+              <div className="flex flex-wrap gap-2 mb-8">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategory(cat.id);  // ← pasa el id
+                      setQuery(cat.name);           // ← muestra el nombre en el input
+                    }}
+                    className="border border-zinc-200 rounded-full px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-900 hover:text-white hover:border-zinc-900 transition-all"
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+              {/* Sugeridas */}
               <p className="text-sm font-bold text-zinc-900 mb-4">Búsquedas sugeridas</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full overflow-x-auto gap-2 mb-8">
                 {SUGGESTED.map((s) => (
                   <button key={s} onClick={() => setQuery(s)}
-                    className="border border-zinc-200 rounded-full px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-900 hover:text-white hover:border-zinc-900 transition-all">
+                    className="shrink-0 border border-zinc-200 rounded-full px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-900 hover:text-white hover:border-zinc-900 transition-all">
                     {s}
                   </button>
                 ))}
               </div>
+
+              {/* Más recientes / destacados */}
+              {featured.length > 0 && (
+                <>
+                  <p className="text-sm font-bold text-zinc-900 mb-4">Más recientes</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {featured.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        variant="mini"
+                        user={user} 
+                        onView={() => {
+                          navigate(`/producto/${product.id}`);
+                          onClose();
+                        }}
+                        onAdd={() => addItem(product)}
+                        onAuthRequired={onAuthRequired}
+                      />
+
+                    ))}
+                  </div>
+                </>
+              )}
             </>
+
+          ) : loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="rounded-2xl bg-zinc-100 mb-2" style={{ aspectRatio: "4/5" }} />
+                  <div className="h-3 bg-zinc-100 rounded w-1/2 mb-1" />
+                  <div className="h-4 bg-zinc-100 rounded w-3/4" />
+                </div>
+              ))}
+            </div>
           ) : results.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
               <Search size={28} className="text-zinc-300" />
@@ -156,11 +197,22 @@ const SearchDrawer = ({ open, onClose }) => {
           ) : (
             <>
               <p className="text-sm font-bold text-zinc-900 mb-4">
-                Productos <span className="text-zinc-400 font-normal">({results.length})</span>
+                Resultados <span className="text-zinc-400 font-normal">({results.length})</span>
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {results.map((product) => (
-                  <MiniCard key={product.id} product={product} onClose={onClose} />
+                   <ProductCard
+                        key={product.id}
+                        product={product}
+                        variant="mini"
+                        user={user} 
+                        onView={() => {
+                          navigate(`/producto/${product.id}`);
+                          onClose();
+                        }}
+                        onAdd={() => addItem(product)}
+                        onAuthRequired={onAuthRequired}
+                      />
                 ))}
               </div>
             </>

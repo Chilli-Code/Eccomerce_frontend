@@ -1,15 +1,26 @@
 import { ShoppingCart, Check, Star, Truck, Shield, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import WishlistButton from "./ui/WishlistButton";
+import DOMPurify from 'dompurify';
 
-const ProductInfo = ({ product, selectedColor, setSelectedColor, selectedStorage, setSelectedStorage, added, handleAdd }) => {
-  const [descModal, setDescModal] = useState(false);
-  const hasDiscount = product.salePrice && Number(product.salePrice) < product.price;
-
-  return (
+const ProductInfo = ({ product, selectedColor,user , setSelectedColor, selectedStorage, setSelectedStorage, added, handleAdd, selectedVariant, setSelectedVariant, onAuthRequired  }) => {  const [descModal, setDescModal] = useState(false);
+// Cambia esta línea:
+const displayPrice     = selectedVariant?.price ? Number(selectedVariant.price) : Number(product.price);
+const displaySalePrice = Number(product.salePrice);
+const hasDiscount      = displaySalePrice > 0 && displaySalePrice < displayPrice;
+  const handleAddWithAuth = () => {
+  if (!user) {
+    onAuthRequired?.();
+    return;
+  }
+  handleAdd();
+};
+return (
     <div className="flex flex-col pt-2 w-full pr-0 md:pr-11 lg:pr-11">
       
       {/* TAG, BRAND, SKU */}
-      <div className="flex items-center gap-2 mb-5">
+      <div className="w-full flex items-center gap-2 mb-5 justify-between">
+      <div className="flex items-center gap-2">
         {product.tag && (
           <span className="inline-block text-[10px] font-bold uppercase tracking-widest bg-zinc-900 text-white px-2 py-1 rounded-full w-fit">
             {product.tag}
@@ -23,6 +34,14 @@ const ProductInfo = ({ product, selectedColor, setSelectedColor, selectedStorage
             SKU: {product.sku}
           </p>
         )}
+      </div>
+        <WishlistButton 
+        productId={product.id}
+        className="border-2 border-zinc-300 "  
+        onAuthRequired={onAuthRequired} 
+        user={user}
+        />
+
       </div>
 
       {/* NOMBRE */}
@@ -40,14 +59,26 @@ const ProductInfo = ({ product, selectedColor, setSelectedColor, selectedStorage
 
       {/* PRECIO */}
       <div className="flex items-baseline gap-3 mb-3">
-        <span className="text-4xl font-bold text-zinc-900">
-          ${(hasDiscount ? Number(product.salePrice) : product.price).toLocaleString("es-CO")}
-        </span>
-        {hasDiscount && (
-          <span className="text-zinc-400 line-through text-xl">
-            ${product.price.toLocaleString("es-CO")}
-          </span>
-        )}
+  {/* Precio principal — si hay descuento muestra el salePrice, si no el price */}
+  <span className="text-4xl font-bold text-zinc-900">
+    {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 })
+      .format(hasDiscount ? displaySalePrice : displayPrice)}
+  </span>
+
+  {/* Precio tachado — solo si hay descuento */}
+  {hasDiscount && (
+    <span className="text-zinc-400 line-through text-xl">
+      {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 })
+        .format(displayPrice)}
+    </span>
+  )}
+
+  {/* Porcentaje de descuento */}
+  {hasDiscount && (
+    <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+      -{Math.round((1 - displaySalePrice / displayPrice) * 100)}%
+    </span>
+  )}
       </div>
 
       {/* STOCK */}
@@ -60,7 +91,45 @@ const ProductInfo = ({ product, selectedColor, setSelectedColor, selectedStorage
           {product.stock} disponibles
         </p>
       )}
-
+{/* TALLAS */}
+{product.variants?.filter(v => v.variantType === "size").length > 0 && (
+  <div className="mb-7">
+    <div className="flex justify-between items-center mb-3">
+      <p className="text-xs font-bold tracking-widest uppercase text-zinc-500">Talla</p>
+      {selectedVariant && (
+        <p className="text-xs font-semibold text-zinc-900">{selectedVariant.name}</p>
+      )}
+    </div>
+    <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-2">
+      {product.variants
+        .filter(v => v.variantType === "size")
+        .map((v) => (
+<button
+  key={v.id}
+  onClick={() => setSelectedVariant(v.id === selectedVariant?.id ? null : v)}
+  disabled={v.stock === 0}
+  className={`flex flex-col items-center px-3 py-2.5 rounded-full text-xs font-bold uppercase tracking-wide border-2 transition-all
+    ${v.stock === 0
+      ? "opacity-40 cursor-not-allowed border-zinc-200 text-zinc-400 line-through"
+      : selectedVariant?.id === v.id
+      ? "bg-zinc-900 text-white border-zinc-900"
+      : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-500"
+    }`}
+>
+  <span>{v.name}</span>
+  <span className={`text-[9px] font-normal mt-0.5 ${selectedVariant?.id === v.id ? "text-zinc-300" : "text-zinc-400"}`}>
+    {v.stock === 0 ? "Agotado" : `${v.stock} uds`}
+  </span>
+</button>
+        ))}
+    </div>
+    {selectedVariant && selectedVariant.stock <= 5 && selectedVariant.stock > 0 && (
+      <p className="text-xs text-amber-600 mt-2">
+        ⚡ Solo {selectedVariant.stock} disponibles en esta talla
+      </p>
+    )}
+  </div>
+)}
       {/* COLORES */}
       {product.colors?.length > 0 && (
         <div className="mb-7">
@@ -98,28 +167,45 @@ const ProductInfo = ({ product, selectedColor, setSelectedColor, selectedStorage
         </div>
       )}
 
-      {/* DESCRIPCIÓN */}
-      <div className="mb-6 max-w-sm">
-        <p className="text-zinc-500 text-sm leading-7 line-clamp-3">
-          {product.description}
-        </p>
-      </div>
+{/* DESCRIPCIÓN */}
+<div className="mb-6 max-w-sm">
+  <div 
+    className="text-zinc-500 text-sm leading-7 line-clamp-3"
+    dangerouslySetInnerHTML={{ 
+      __html: DOMPurify.sanitize(product.description, {
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'mark', 'span'],
+        ALLOWED_ATTR: ['class', 'style']
+      })
+    }} 
+  />
+</div>
 
       {/* BOTONES */}
-      <button
-        onClick={handleAdd}
-        disabled={product.status === "out_of_stock"}
-        className={`w-full flex items-center justify-center gap-2.5 py-4 rounded-full font-bold text-sm uppercase tracking-widest mb-3 transition-all duration-300 ${
-          product.status === "out_of_stock"
-            ? "bg-zinc-300 text-white cursor-not-allowed"
-            : added
-            ? "bg-green-600 text-white"
-            : "bg-zinc-900 text-white hover:bg-zinc-700"
-        }`}
-      >
-        {added ? <Check size={16} /> : <ShoppingCart size={16} />}
-        {added ? "¡Agregado al carrito!" : "Agregar al carrito"}
-      </button>
+<button
+  onClick={handleAddWithAuth}
+  disabled={
+    product.status === "out_of_stock" ||
+    (product.variants?.length > 0 && !selectedVariant) ||
+    (selectedVariant && selectedVariant.stock === 0)
+  }
+  className={`w-full flex items-center justify-center gap-2.5 py-4 rounded-full font-bold text-sm uppercase tracking-widest mb-3 transition-all duration-300 ${
+    product.status === "out_of_stock" || (selectedVariant && selectedVariant.stock === 0)
+      ? "bg-zinc-300 text-white cursor-not-allowed"
+      : product.variants?.length > 0 && !selectedVariant
+      ? "bg-zinc-200 text-zinc-500 cursor-not-allowed"
+      : added
+      ? "bg-green-600 text-white"
+      : "bg-zinc-900 text-white hover:bg-zinc-700"
+  }`}
+>
+  {added ? <Check size={16} /> : <ShoppingCart size={16} />}
+  {product.variants?.length > 0 && !selectedVariant
+    ? "Selecciona una talla"
+    : added
+    ? "¡Agregado al carrito!"
+    : "Agregar al carrito"
+  }
+</button>
 
       <button className="w-full py-4 rounded-full font-bold text-sm uppercase tracking-widest border-2 border-zinc-900 text-zinc-900 hover:bg-zinc-100 mb-10">
         Comprar ahora

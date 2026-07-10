@@ -12,16 +12,21 @@
 
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
 
-    <!-- Preconnect: must have crossorigin on gstatic to match the font request -->
+    <!-- 👈 CSP PARA STRIPE Y DESARROLLO -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' https://js.stripe.com https://m.stripe.network https://*.stripe.com 'unsafe-inline' 'unsafe-eval' blob:;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com data:;
+      frame-src https://js.stripe.com https://hooks.stripe.com https://*.stripe.com;
+      connect-src 'self' http://localhost:3001 http://192.168.0.16:3001 https://api.stripe.com https://*.stripe.com;
+      img-src 'self' data: https://i.ibb.co https://placehold.co https://imgbb.com https://via.placeholder.com https://*.stripe.com;
+    ">
+
+    <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <!--
-      Non-render-blocking font load:
-      1. media="print" loads it in background (doesn't block render)
-      2. onload switches it to "all" so it applies once downloaded
-      3. <noscript> is the fallback for users with JS disabled
-    -->
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Cookie&display=swap"

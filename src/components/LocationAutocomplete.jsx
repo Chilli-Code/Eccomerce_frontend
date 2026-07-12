@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { searchDepartments, getCitiesByDepartment, searchCities, findDepartmentByCity } from "../lib/divipola";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { searchDepartments, getCitiesByDepartment, findDepartmentByCity } from "../lib/divipola";
 
 function Autocomplete({ value, onChange, placeholder, options, disabled = false }) {
   const [open, setOpen] = useState(false);
@@ -76,6 +76,18 @@ export default function LocationAutocomplete({
       setCityOptions(getCitiesByDepartment(department).map(c => c.name));
     } else {
       setCityOptions([]);
+    }
+  }, [department]);
+
+  const prevDepartmentRef = useRef(department);
+  useEffect(() => {
+    const prev = prevDepartmentRef.current;
+    prevDepartmentRef.current = department;
+    if (prev && department !== prev && city) {
+      const validCities = getCitiesByDepartment(department).map(c => c.name.toLowerCase());
+      if (!validCities.includes(city.toLowerCase())) {
+        onCityChange("");
+      }
     }
   }, [department]);
 

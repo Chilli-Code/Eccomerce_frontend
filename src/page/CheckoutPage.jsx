@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { addressApi, paymentApi, ordersApi } from "../lib/api";
+import { addressApi, paymentApi, ordersApi, settingsApi } from "../lib/api";
 import { notify } from "../lib/notify";
 import StripePayment from "../components/StripePayment";
 import AddressInput from "../components/AddressInput";
@@ -39,6 +39,7 @@ export default function CheckoutPage() {
     type: "home",
     isDefault: false,
   });
+  const [storeSettings, setStoreSettings] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -51,6 +52,7 @@ export default function CheckoutPage() {
     }
     loadAddresses();
     loadPaymentMethods();
+    loadStoreSettings();
   }, [user, items]);
 
   const loadAddresses = async () => {
@@ -74,6 +76,15 @@ export default function CheckoutPage() {
       else if (data.length > 0) setSelectedCard(data[0]);
     } catch (err) {
       console.error("Error loading payment methods:", err);
+    }
+  };
+
+  const loadStoreSettings = async () => {
+    try {
+      const data = await settingsApi.get();
+      setStoreSettings(data);
+    } catch (err) {
+      console.error("Error loading store settings:", err);
     }
   };
 
@@ -121,7 +132,7 @@ const handlePaymentSuccess = async (paymentIntent) => {
     
     console.log("📦 Enviando orden:", orderData);
     
-    const response = await fetch("http://192.168.0.16:3001/checkout", {
+    const response = await fetch("http://192.168.0.14:3001/checkout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -146,7 +157,43 @@ const handlePaymentSuccess = async (paymentIntent) => {
   }
 };
 
-  const shipping = 0; // Calcular según dirección
+  // Calcular costo de envío
+  const freeShippingMin = storeSettings?.freeShippingMinAmount ? Number(storeSettings.freeShippingMinAmount) : null;
+  const hasFreeShippingCoupon = appliedCoupon?.type === "free_shipping";
+  const inPromo = (storeSettings?.shippingPromos || []).some(p => {
+    const now = new Date();
+    const start = new Date(p.startDate);
+    const end = new Date(p.endDate);
+    end.setHours(23, 59, 59, 999);
+    return now >= start && now <= end;
+  });
+  let shipping = 0;
+  let shippingReason = "";
+  if (hasFreeShippingCoupon) {
+    shippingReason = "Cupón free_shipping";
+  } else if (inPromo) {
+    shippingReason = "Promoción activa";
+  } else if (freeShippingMin !== null && subtotal >= freeShippingMin) {
+    shippingReason = `Superaste el mínimo de $${freeShippingMin.toLocaleString("es-CO")}`;
+  } else {
+    // Calcular por producto
+    let hasDefault = false;
+    for (const item of items) {
+      if (item.shippingMethod === "manual" && item.shippingPrice) {
+        shipping += item.shippingPrice * item.qty;
+      } else {
+        hasDefault = true;
+      }
+    }
+    // Una sola vez la tarifa global si hay productos "default"
+    if (hasDefault) {
+      shipping += Number(storeSettings?.shippingCost || 0);
+    }
+    if (shipping > 0) {
+      shippingReason = "Costo calculado por producto";
+    }
+  }
+  const totalWithShipping = finalTotal + shipping;
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-16">
@@ -293,7 +340,7 @@ const handlePaymentSuccess = async (paymentIntent) => {
 
                 {paymentMethod === "stripe" && (
                   <StripePayment
-                    amount={finalTotal}
+                    amount={totalWithShipping}
                     onSuccess={handlePaymentSuccess}
                     onError={(error) => notify.error(error)}
                   />
@@ -333,8 +380,11 @@ const handlePaymentSuccess = async (paymentIntent) => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-500">Envío</span>
-                  <span className="text-zinc-700">Gratis</span>
+                  <span className={shipping === 0 ? "text-green-600 font-medium" : "text-zinc-700"}>{shipping === 0 ? "Gratis" : `$${shipping.toLocaleString("es-CO")}`}</span>
                 </div>
+                {shipping === 0 && shippingReason && (
+                  <div className="text-[11px] text-green-600 text-right -mt-1">{shippingReason}</div>
+                )}
                 {discount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Descuento</span>
@@ -343,15 +393,22 @@ const handlePaymentSuccess = async (paymentIntent) => {
                 )}
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-200">
                   <span>Total</span>
-                  <span>${finalTotal.toLocaleString("es-CO")}</span>
+                  <span>${totalWithShipping.toLocaleString("es-CO")}</span>
                 </div>
               </div>
 
               <div className="mt-6 space-y-2 text-xs text-zinc-400">
-                <div className="flex items-center gap-2">
-                  <Truck size={14} />
-                  <span>Envío gratis en compras mayores a $50.000</span>
-                </div>
+                {inPromo ? (
+                  <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <Truck size={14} />
+                    <span>🎉 Promoción de envío gratis activa</span>
+                  </div>
+                ) : freeShippingMin !== null && (
+                  <div className="flex items-center gap-2">
+                    <Truck size={14} />
+                    <span>Envío gratis en compras mayores a ${freeShippingMin.toLocaleString("es-CO")}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Shield size={14} />
                   <span>Compra protegida</span>

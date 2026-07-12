@@ -28,6 +28,7 @@ const CartDrawer = () => {
   
   const [couponCode, setCouponCode] = useState("");
   const [loadingCoupon, setLoadingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState("");
   const onClose = () => setOpen(false);
   const navigate = useNavigate();
 
@@ -41,16 +42,24 @@ const CartDrawer = () => {
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return notify.error("Ingresa un código");
+    setCouponError("");
     setLoadingCoupon(true);
     try {
+      console.log("🎟️ Aplicando cupón:", couponCode);
       const result = await applyCoupon(couponCode);
+      console.log("🎟️ Resultado:", result);
       if (result.success) {
         notify.success(`Cupón ${couponCode} aplicado`, "¡Descuento aplicado!");
         setCouponCode("");
+        setCouponError("");
       } else {
-        notify.error(result.error || "Cupón inválido", "No se puede aplicar");
+        const msg = result.error || "Cupón inválido";
+        setCouponError(msg);
+        notify.error(msg, "No se puede aplicar");
       }
     } catch (err) {
+      console.error("🎟️ Error inesperado:", err);
+      setCouponError("Error inesperado al validar cupón");
       notify.error("Error al validar cupón");
     } finally {
       setLoadingCoupon(false);
@@ -59,6 +68,7 @@ const CartDrawer = () => {
 
   const handleRemoveCoupon = () => {
     removeCoupon();
+    setCouponError("");
     notify.success("Cupón eliminado");
   };
 
@@ -111,7 +121,7 @@ const CartDrawer = () => {
                 type="text"
                 placeholder="Código de cupón"
                 value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
                 disabled={!!appliedCoupon}
                 className="w-full pl-8 pr-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 disabled:bg-zinc-50"
               />
@@ -138,8 +148,13 @@ const CartDrawer = () => {
               Cupón aplicado: {appliedCoupon.code} -{" "}
               {appliedCoupon.type === "percentage" 
                 ? `${appliedCoupon.value}% descuento` 
+                : appliedCoupon.type === "free_shipping"
+                ? "Envío gratis"
                 : `$${appliedCoupon.value} descuento`}
             </p>
+          )}
+          {couponError && (
+            <p className="text-xs text-red-500 mt-1 px-3">{couponError}</p>
           )}
         </div>
         

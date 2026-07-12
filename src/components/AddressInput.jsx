@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const VIA_TYPES = [
   { value: "Calle", label: "Calle" },
@@ -9,15 +9,20 @@ const VIA_TYPES = [
   { value: "Circ", label: "Circular" },
 ];
 
+const STREET_REGEX = /^(Calle|Cra|Av|Tv|Dg|Circ)\s+(.+?)\s*#\s*(.+?)\s*-\s*(.+?)(?:,\s*(.+))?$/i;
+
 export default function AddressInput({ value, onChange, className = "" }) {
   const [parts, setParts] = useState(() => parseAddress(value || ""));
+  const lastEmitted = useRef("");
 
   useEffect(() => {
-    setParts(parseAddress(value || ""));
+    if (value !== lastEmitted.current) {
+      setParts(parseAddress(value || ""));
+    }
   }, [value]);
 
   function parseAddress(addr) {
-    const match = addr.match(/^(Calle|Cra|Av|Tv|Dg|Circ)\s+(.+?)\s*#\s*(.+?)\s*-\s*(.+?)(?:,\s*(.+))?$/i);
+    const match = addr.match(STREET_REGEX);
     if (match) {
       return {
         viaType: match[1],
@@ -42,7 +47,9 @@ export default function AddressInput({ value, onChange, className = "" }) {
   function update(field, val) {
     const next = { ...parts, [field]: val };
     setParts(next);
-    onChange(buildAddress(next));
+    const built = buildAddress(next);
+    lastEmitted.current = built;
+    onChange(built);
   }
 
   return (
@@ -61,25 +68,27 @@ export default function AddressInput({ value, onChange, className = "" }) {
           type="text"
           value={parts.name}
           onChange={e => update("name", e.target.value)}
-          placeholder="Nombre de la vía"
+          placeholder="N° de vía (ej: 82, 82E)"
           className="flex-1 min-w-[120px] px-3 py-2 border border-zinc-200 rounded-xl text-sm"
         />
-        <span className="text-sm text-zinc-400 font-medium flex-shrink-0">#</span>
-        <input
-          type="text"
-          value={parts.num1}
-          onChange={e => update("num1", e.target.value)}
-          placeholder="N°"
-          className="w-[70px] px-3 py-2 border border-zinc-200 rounded-xl text-sm"
-        />
-        <span className="text-sm text-zinc-400 flex-shrink-0">-</span>
-        <input
-          type="text"
-          value={parts.num2}
-          onChange={e => update("num2", e.target.value)}
-          placeholder="N°"
-          className="w-[70px] px-3 py-2 border border-zinc-200 rounded-xl text-sm"
-        />
+        <div className="flex items-center gap-1 flex-nowrap">
+          <span className="text-sm text-zinc-400 font-medium">#</span>
+          <input
+            type="text"
+            value={parts.num1}
+            onChange={e => update("num1", e.target.value)}
+            placeholder="Placa (ej: 26, 26C)"
+            className="w-[110px] px-3 py-2 border border-zinc-200 rounded-xl text-sm"
+          />
+          <span className="text-sm text-zinc-400">-</span>
+          <input
+            type="text"
+            value={parts.num2}
+            onChange={e => update("num2", e.target.value)}
+            placeholder="N° (ej: 163, 01)"
+            className="w-[110px] px-3 py-2 border border-zinc-200 rounded-xl text-sm"
+          />
+        </div>
       </div>
       <input
         type="text"

@@ -63,6 +63,8 @@ export function CartProvider({ children }) {
         img: product.images?.[0] || product.img,
         brand: product.brand,
         bg: product.bgColor || "#f5f5f5",
+        shippingMethod: product.shippingMethod || "default",
+        shippingPrice: product.shippingPrice ? Number(product.shippingPrice) : null,
       }];
     });
   };

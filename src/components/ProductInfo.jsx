@@ -2,8 +2,10 @@ import { ShoppingCart, Check, Star, Truck, Shield, RotateCcw } from "lucide-reac
 import { useState } from "react";
 import WishlistButton from "./ui/WishlistButton";
 import DOMPurify from 'dompurify';
+import { useStore } from "../context/StoreContext";
 
 const ProductInfo = ({ product, selectedColor,user , setSelectedColor, selectedStorage, setSelectedStorage, added, handleAdd, selectedVariant, setSelectedVariant, onAuthRequired  }) => {  const [descModal, setDescModal] = useState(false);
+  const { settings } = useStore() || {};
 // Cambia esta línea:
 const displayPrice     = selectedVariant?.price ? Number(selectedVariant.price) : Number(product.price);
 const displaySalePrice = Number(product.salePrice);
@@ -91,6 +93,26 @@ return (
           {product.stock} disponibles
         </p>
       )}
+
+      {/* ENVÍO */}
+      {(() => {
+        const method = product.shippingMethod || "default";
+        if (method === "manual" && product.shippingPrice) {
+          const p = Number(product.shippingPrice);
+          return <p className="text-xs text-zinc-500 font-medium mb-4 flex items-center gap-1"><Truck size={13} /> Envío: ${p.toLocaleString("es-CO")}</p>;
+        }
+        if (method === "default" && settings) {
+          const cost = Number(settings.shippingCost || 0);
+          const freeMin = settings.freeShippingMinAmount ? Number(settings.freeShippingMinAmount) : null;
+          if (cost === 0) {
+            return <p className="text-xs text-green-600 font-medium mb-4 flex items-center gap-1"><Truck size={13} /> Envío gratis</p>;
+          }
+          if (freeMin) {
+            return <p className="text-xs text-zinc-500 font-medium mb-4 flex items-center gap-1"><Truck size={13} /> Envío: ${cost.toLocaleString("es-CO")} · gratis en compras &gt; ${freeMin.toLocaleString("es-CO")}</p>;
+          }
+          return <p className="text-xs text-zinc-500 font-medium mb-4 flex items-center gap-1"><Truck size={13} /> Envío: ${cost.toLocaleString("es-CO")}</p>;
+        }
+      })()}
 {/* TALLAS */}
 {product.variants?.filter(v => v.variantType === "size").length > 0 && (
   <div className="mb-7">
@@ -213,8 +235,12 @@ return (
 
       {/* ICONOS */}
       <div className="grid grid-cols-3 gap-4 mb-10">
-        {[{ icon: Truck, label: "Envío gratis", sub: "24 – 48 horas" },
-          { icon: Shield, label: "Garantía", sub: "12 meses" },
+        {[{ icon: Truck, label: (() => {
+            const m = product.shippingMethod || "default";
+            if (m === "manual" && product.shippingPrice) return "Envío: $" + Number(product.shippingPrice).toLocaleString("es-CO");
+            return "Envío gratis";
+          })(), sub: product.deliveryTime || "24 – 48 horas" },
+          { icon: Shield, label: "Garantía", sub: product.warranty || "12 meses" },
           { icon: RotateCcw, label: "Devolución", sub: "30 días gratis" }
         ].map(({ icon: Icon, label, sub }) => (
           <div key={label} className="flex flex-col items-center text-center gap-1.5 bg-zinc-50 rounded-2xl py-4 px-2">

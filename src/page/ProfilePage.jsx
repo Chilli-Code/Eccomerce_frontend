@@ -448,7 +448,16 @@ const [orders, setOrders] = useState([]);
                         <button
                           onClick={() => {
                             setEditingAddress(addr);
-                            setAddressForm(addr);
+                            setAddressForm({
+                              name: addr.name || "",
+                              street: addr.street || "",
+                              city: addr.city || "",
+                              state: addr.state || "",
+                              zipCode: addr.zipCode || "",
+                              country: addr.country || "Colombia",
+                              type: addr.type || "home",
+                              isDefault: addr.isDefault || false,
+                            });
                             setShowAddressForm(true);
                           }}
                           className="p-1 text-zinc-400 hover:text-zinc-900"
@@ -470,7 +479,7 @@ const [orders, setOrders] = useState([]);
               {/* Modal de dirección (igual que antes) */}
               {showAddressForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                  <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                  <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-bold text-zinc-900">
                         {editingAddress ? "Editar dirección" : "Nueva dirección"}

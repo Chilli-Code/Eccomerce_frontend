@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { addressApi, paymentApi, ordersApi, settingsApi } from "../lib/api";
 import { notify } from "../lib/notify";
 import StripePayment from "../components/StripePayment";
+import BoldPayment from "../components/BoldPayment";
 import AddressInput from "../components/AddressInput";
 import LocationAutocomplete from "../components/LocationAutocomplete";
 import { MapPin, CreditCard, ChevronRight, Truck, Shield, RotateCcw } from "lucide-react";
@@ -347,9 +348,25 @@ const handlePaymentSuccess = async (paymentIntent) => {
                 )}
                 
                 {paymentMethod === "bold" && (
-                  <div className="p-4 bg-zinc-50 rounded-xl text-center">
-                    <p className="text-zinc-500">Próximamente disponible</p>
-                  </div>
+                  <BoldPayment
+                    amount={totalWithShipping}
+                    checkoutData={{
+                      addressId: selectedAddress?.id,
+                      items: items.map(item => ({
+                        productId: item.id,
+                        variantId: item.variantId || undefined,
+                        quantity: item.qty,
+                        price: Number(item.price),
+                        name: item.name,
+                      })),
+                      couponCode: appliedCoupon?.code || undefined,
+                    }}
+                    onSuccess={(result) => {
+                      notify.success("¡Pedido realizado con éxito!");
+                      navigate("/mis-pedidos");
+                    }}
+                    onError={(error) => notify.error(error)}
+                  />
                 )}
               </div>
             </div>

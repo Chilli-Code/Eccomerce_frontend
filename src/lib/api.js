@@ -92,7 +92,16 @@ export const ordersApi = {
     method: "POST", 
     body: JSON.stringify(data) 
   }),
+  createBoldCheckout: (data) => request("/orders/create-bold-checkout", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }),
+  confirmBoldPayment: (orderId) => request("/orders/confirm-bold-payment", {
+    method: "POST",
+    body: JSON.stringify({ orderId }),
+  }),
   getUserOrders: (userId, params = {}) => request(`/orders/user/${userId}?${new URLSearchParams(params)}`),
+  cancel: (orderId) => request(`/orders/${orderId}/cancel`, { method: "PUT" }),
 };
 
 // 👈 AGREGAR ESTO

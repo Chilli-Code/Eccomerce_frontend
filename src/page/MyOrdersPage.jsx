@@ -14,7 +14,8 @@ import { notify } from "../lib/notify";
 const statusConfig = {
   pending: { label: "Pendiente", icon: Clock, color: "bg-amber-500", textColor: "text-amber-600", bgColor: "bg-amber-50" },
   processing: { label: "Procesando", icon: Clock, color: "bg-amber-500", textColor: "text-amber-600", bgColor: "bg-amber-50" },
-  completed: { label: "Completado", icon: CheckCircle, color: "bg-green-500", textColor: "text-green-600", bgColor: "bg-green-50" },
+  in_transit: { label: "En camino", icon: Truck, color: "bg-blue-500", textColor: "text-blue-600", bgColor: "bg-blue-50" },
+  delivered: { label: "Entregado", icon: CheckCircle, color: "bg-green-500", textColor: "text-green-600", bgColor: "bg-green-50" },
   cancelled: { label: "Cancelado", icon: XCircle, color: "bg-red-500", textColor: "text-red-600", bgColor: "bg-red-50" }
 };
 
@@ -82,26 +83,12 @@ const fetchOrders = async () => {
 
   const handleCancelOrder = async (orderId) => {
     if (!confirm("¿Estás seguro de que quieres cancelar este pedido?")) return;
-    
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}/cancel`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
-
-      if (response.ok) {
-        // Actualizar el estado local
-        setOrders(orders.map(order => 
-          order.id === orderId ? { ...order, status: "cancelled" } : order
-        ));
-        alert("Pedido cancelado exitosamente");
-      } else {
-        alert("Error al cancelar el pedido");
-      }
+      await ordersApi.cancel(orderId);
+      setOrders(orders.map(order =>
+        order.id === orderId ? { ...order, status: "cancelled" } : order
+      ));
+      alert("Pedido cancelado exitosamente");
     } catch (error) {
       console.error("Error cancelling order:", error);
       alert("Error al cancelar el pedido");
@@ -202,7 +189,7 @@ const fetchOrders = async () => {
           </div>
           <div className="bg-zinc-50 rounded-2xl p-4 text-center">
             <p className="text-2xl font-bold text-zinc-900">
-              {orders.filter(o => o.status === "shipped").length}
+              {orders.filter(o => o.status === "in_transit").length}
             </p>
             <p className="text-xs text-zinc-500 uppercase tracking-wider">En camino</p>
           </div>
@@ -217,7 +204,7 @@ const fetchOrders = async () => {
         {/* Filtros y búsqueda - SIN CAMBIOS */}
         <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {["all", "pending", "processing", "shipped", "delivered", "cancelled"].map((status) => {
+            {["all", "pending", "processing", "in_transit", "delivered", "cancelled"].map((status) => {
               const config = statusConfig[status] || { label: status === "all" ? "Todos" : status };
               return (
                 <button

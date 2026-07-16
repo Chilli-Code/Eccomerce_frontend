@@ -26,7 +26,8 @@ import ProfilePage from './page/ProfilePage.jsx';
 import MyOrdersPage from './page/MyOrdersPage';
 import NotFoundPage from './page/NotFoundPage';
 import SupportTicket from './page/SupportTicket';
-import CheckoutPage from './page/CheckoutPage'; 
+import CheckoutPage from './page/CheckoutPage';
+import BoldCallback from './page/BoldCallback';
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 
@@ -190,6 +191,9 @@ const App = () => {
             <Route path="/checkout" element={
   user ? <CheckoutPage /> : <Navigate to="/" replace />
 } />
+            <Route path="/bold-callback" element={
+              user ? <BoldCallback /> : <Navigate to="/" replace />
+            } />
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

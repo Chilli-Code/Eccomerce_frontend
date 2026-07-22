@@ -2,20 +2,26 @@ import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Menu, X, Search, Smartphone, ShoppingCart, User, ChevronDown } from "lucide-react";
 import CartDrawer from "./CartDrawer";
 import AuthDrawer from "./Authdrawer";
-import { navLinksData } from "../assets/data";
 import SearchDrawer from "./Searchdrawe";
 import gsap from "gsap";
 import { Link, useLocation } from "react-router-dom";
 import { getStoreSettings } from "../lib/api";
 import { useCart } from "../context/CartContext";
 
+const DEFAULT_NAV = [
+  { name: "INICIO", href: "/", subMenu: [] },
+  { name: "PRODUCTOS", href: "/products", subMenu: [] },
+  { name: "SERVICIOS", href: "/#services", subMenu: [] },
+  { name: "CONTACTO", href: "/contact", subMenu: [] },
+];
+
+const API_URL = import.meta.env.VITE_API_URL;
 const activeLinkClasses = "border-zinc-400 font-bold";
 
 const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
 
 
   const { pathname } = useLocation();
-  const activeLink = navLinksData.find((l) => l.href === pathname)?.name || "";
   const [menuOpen, setMenuOpen] = useState(false);
   const { count, setOpen: setCartOpen } = useCart();
   const [authOpen, setAuthOpen] = useState(false);
@@ -23,18 +29,17 @@ const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
   const isOpen = useRef(false);
   const isAnimating = useRef(false);
   const [logoUrl, setLogoUrl] = useState(null);
-
   const [storeName, setStoreName] = useState(["Mobile", "Shop"]);
+  const [navLinks, setNavLinks] = useState(DEFAULT_NAV);
+  const [promoBanner, setPromoBanner] = useState("Sign up and get 20% off for all new-season collections");
+  const [socialLinks, setSocialLinks] = useState([{ name: "Instagram", url: "#" }, { name: "Twitter", url: "#" }, { name: "YouTube", url: "#" }]);
 
+  const activeLink = navLinks.find((l) => l.href === pathname)?.name || "";
 
   useEffect(() => {
     getStoreSettings()
       .then(data => {
-
-        if (data?.logoUrl) {
-          setLogoUrl(data.logoUrl);
-        }
-
+        if (data?.logoUrl) setLogoUrl(data.logoUrl);
         if (data?.storeName) {
           const words = data.storeName.trim().split(" ");
           if (words.length >= 2) {
@@ -45,6 +50,25 @@ const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
         }
       })
       .catch(console.error);
+
+    if (API_URL) {
+      fetch(`${API_URL}/storefront/widget-status/header-banner?_=${Date.now()}`, { cache: "no-cache" })
+        .then(r => r.json())
+        .then(data => {
+          if (data.active && data.content) {
+            if (data.content.promoBanner) setPromoBanner(data.content.promoBanner);
+            if (data.content.socialLinks?.length) setSocialLinks(data.content.socialLinks);
+          }
+        })
+        .catch(() => {});
+
+      fetch(`${API_URL}/storefront/widget-status/site-navigation?_=${Date.now()}`, { cache: "no-cache" })
+        .then(r => r.json())
+        .then(data => {
+          if (data.active && data.content?.navLinks?.length) setNavLinks(data.content.navLinks);
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const menuOverlayRef = useRef(null);
@@ -124,7 +148,7 @@ const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
         >
           <div className="flex flex-col h-full gap-12 px-8">
             <nav className="flex flex-col gap-1">
-              {navLinksData.map((link, i) => (
+              {navLinks.map((link, i) => (
                 <div key={link.name} style={{ overflow: "hidden", paddingBottom: "4px" }}>
                   {/*
                     ── CLAVE: ref en este div, NO en <Link> ──
@@ -157,8 +181,8 @@ const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
             <div className="border-t border-zinc-700 pb-2">
               <p className="text-zinc-500 text-xs tracking-widest uppercase mb-3">Follow us</p>
               <div className="flex gap-6">
-                {["Instagram", "Twitter", "YouTube"].map((s) => (
-                  <a key={s} href="#" className="text-zinc-400 hover:text-white text-sm transition-colors">{s}</a>
+                {socialLinks.map((s) => (
+                  <a key={s.name} href={s.url || "#"} className="text-zinc-400 hover:text-white text-sm transition-colors">{s.name}</a>
                 ))}
               </div>
             </div>
@@ -173,7 +197,7 @@ const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
         style={{ willChange: "transform" }}
       >
         <div className="bg-zinc-900 text-white text-center text-xs py-2">
-          Sign up and get 20% off for all new-season collections
+          {promoBanner}
         </div>
         <div className={`py-4 ${menuOpen ? "bg-zinc-900" : "bg-white"}`}>
           <div className={`max-w-7xl mx-auto px-4 flex justify-between items-center p-4 transition-colors duration-300 ${menuOpen ? "" : "border border-zinc-200 bg-white rounded-2xl"}`}>
@@ -208,7 +232,7 @@ const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
             {/* Nav desktop */}
             {!menuOpen && (
               <div className="hidden md:flex space-x-4 text-sm font-medium text-zinc-600">
-                {navLinksData.map((link) => (
+                {navLinks.map((link) => (
                   <div key={link.name} className="relative group">
                     {link.forceReload ? (
                       <a

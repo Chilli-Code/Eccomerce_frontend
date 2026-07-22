@@ -1,6 +1,21 @@
+import { useState, useEffect } from "react";
 import { Zap } from "lucide-react";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const TaglineSection = () => {
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    if (!API_URL) return;
+    fetch(`${API_URL}/storefront/widget-status/homepage-tagline?_=${Date.now()}`, { cache: "no-cache" })
+      .then(r => r.json())
+      .then(data => { if (data.active && data.content?.text) setText(data.content.text); })
+      .catch(() => {});
+  }, []);
+
+  const displayText = text || "Tecnología que se adapta a tu vida, al instante, elegida por quienes saben lo que quieren — sin compromisos, solo lo mejor en la palma de tu mano";
+
   return (
     <div className="bg-white py-20">
       <div className="relative max-w-5xl mx-auto px-4 text-center">
@@ -16,12 +31,7 @@ const TaglineSection = () => {
 
         {/* Titular */}
         <h2 className="text-4xl lg:text-5xl font-extrabold leading-tight text-zinc-900 tracking-tight">
-          Tecnología que se adapta a tu vida,{" "}
-          <div className="border w-fit inline-flex items-center border-zinc-600 rounded-full pr-4 pl-2 pb-1">
-            <Zap className="inline-block text-yellow-500" size={40} />
-            al instante
-          </div>
-          , elegida <br /> por quienes saben lo que quieren — sin compromisos, <br /> solo lo mejor en la palma de tu mano
+          {displayText}
         </h2>
 
         {/* Imagen flotante — auriculares izquierda abajo */}

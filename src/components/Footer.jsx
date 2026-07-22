@@ -1,24 +1,7 @@
+import { useState, useEffect } from "react";
 import { Send, ShoppingBag } from "lucide-react";
 
-const productLinks = {
-  title: "PRODUCTOS",
-  links: ["Celulares", "Accesorios", "Smartwatches", "Auriculares", "Cargadores"],
-};
-
-const buyingLinks = {
-  title: "COMPRAR",
-  links: ["Nuevos Lanzamientos", "Más Vendidos", "Ofertas", "Reacondicionados", "Garantía"],
-};
-
-const helpLinks = {
-  title: "AYUDA",
-  links: ["Envíos", "Devoluciones", "Soporte", "Contáctanos"],
-};
-
-const socialLinks = {
-  title: "SÍGUENOS",
-  links: ["Instagram", "Twitter / X", "YouTube", "TikTok"],
-};
+const API_URL = import.meta.env.VITE_API_URL;
 
 const FooterLinks = ({ title, links }) => (
   <div className="mb-8">
@@ -41,6 +24,25 @@ const FooterLinks = ({ title, links }) => (
 );
 
 const Footer = () => {
+  const [footer, setFooter] = useState(null);
+
+  useEffect(() => {
+    if (!API_URL) return;
+    fetch(`${API_URL}/storefront/widget-status/site-footer?_=${Date.now()}`, { cache: "no-cache" })
+      .then(r => r.json())
+      .then(data => { if (data.active && data.content) setFooter(data.content); })
+      .catch(() => {});
+  }, []);
+
+  const groups = footer?.groups || [
+    { title: "PRODUCTOS", links: ["Celulares", "Accesorios", "Smartwatches", "Auriculares", "Cargadores"] },
+    { title: "COMPRAR", links: ["Nuevos Lanzamientos", "Más Vendidos", "Ofertas", "Reacondicionados", "Garantía"] },
+    { title: "AYUDA", links: ["Envíos", "Devoluciones", "Soporte", "Contáctanos"] },
+  ];
+  const footerSocial = footer?.socialLinks || [{ name: "Instagram", url: "#" }, { name: "Twitter / X", url: "#" }, { name: "YouTube", url: "#" }, { name: "TikTok", url: "#" }];
+  const brandNames = footer?.brandNames || ["Apple", "Samsung", "Google", "Xiaomi", "OnePlus"];
+  const legalLinks = footer?.legalLinks || [{ name: "Privacidad", url: "#" }, { name: "Términos", url: "#" }, { name: "Cookies", url: "#" }];
+
   return (
     <footer className="bg-zinc-900 text-white py-16">
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
@@ -49,29 +51,24 @@ const Footer = () => {
         <div>
           <div className="flex items-center gap-2 text-3xl text-zinc-100 tracking-tight impact mb-4">
             <ShoppingBag size={28} className="text-zinc-50" />
-            MOBILESHOP<sup className="-ml-1 text-base">®</sup>
+            {footer?.brandName || "MOBILESHOP"}<sup className="-ml-1 text-base">®</sup>
           </div>
           <p className="text-sm text-zinc-400 leading-relaxed">
-            Tecnología premium curada para quienes saben lo que quieren.
-            Sin relleno — solo lo mejor.
+            {footer?.tagline || "Tecnología premium curada para quienes saben lo que quieren. Sin relleno — solo lo mejor."}
           </p>
         </div>
 
-        {/* Columna 2 — Productos + Marcas */}
-        <div>
-          <FooterLinks {...productLinks} />
-          <FooterLinks title="MARCAS" links={["Apple", "Samsung", "Google", "Xiaomi", "OnePlus"]} />
-        </div>
-
-        {/* Columna 3 — Comprar + Ayuda */}
-        <div>
-          <FooterLinks {...buyingLinks} />
-          <FooterLinks {...helpLinks} />
-        </div>
+        {/* Columnas dinámicas de grupos */}
+        {groups.slice(0, 2).map((g, i) => (
+          <div key={i}>
+            <FooterLinks title={g.title} links={g.links} />
+            {i === 0 && <FooterLinks title="MARCAS" links={brandNames} />}
+          </div>
+        ))}
 
         {/* Columna 4 — Redes + Newsletter */}
         <div>
-          <FooterLinks {...socialLinks} />
+          <FooterLinks title="SÍGUENOS" links={footerSocial.map(s => s.name)} />
 
           <h4 className="text-xs font-bold tracking-widest text-zinc-500 uppercase mb-4">
             ÚNETE A LA COMUNIDAD
@@ -97,11 +94,11 @@ const Footer = () => {
 
       {/* Bottom bar */}
       <div className="max-w-7xl mx-auto px-4 border-t border-zinc-800 mt-16 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-zinc-600">
-        <p>© 2025 MobileShop®. Todos los derechos reservados.</p>
+        <p>{footer?.copyright || "© 2025 MobileShop®. Todos los derechos reservados."}</p>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-zinc-400 transition-colors">Privacidad</a>
-          <a href="#" className="hover:text-zinc-400 transition-colors">Términos</a>
-          <a href="#" className="hover:text-zinc-400 transition-colors">Cookies</a>
+          {legalLinks.map((l, i) => (
+            <a key={i} href={l.url || "#"} className="hover:text-zinc-400 transition-colors">{l.name}</a>
+          ))}
         </div>
       </div>
 

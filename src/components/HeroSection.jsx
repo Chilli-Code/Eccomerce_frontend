@@ -3,23 +3,27 @@ import { ArrowDown, Mail, Zap } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
-import { carruselData } from "../assets/data";
+import { getStoreSettings } from "../lib/api";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const WIDGET_SLUG = "slider-full-page";
 
-function HeroWidget({ bundleUrl, content }) {
+const DEFAULT_SLIDES = [
+  { img: "/images/audifonos.png", titulo: "20% OFF en iPhone", subtitulo: "Solo este fin de semana", cta: "Ver oferta", ctaHref: "/ofertas", bg: "#1c1c1e" },
+  { img: "/images/tablet.png", titulo: "Nueva temporada Samsung", subtitulo: "Galaxy S24 ya disponible", cta: "Comprar ahora", ctaHref: "/celulares/samsung", bg: "#1a2332" },
+  { img: "/images/promo1.png", titulo: "Accesorios premium", subtitulo: "AirPods, cables y más", cta: "Ver accesorios", ctaHref: "/accesorios", bg: "#2a2a2a" },
+  { img: "/images/promo2.png", titulo: "Envío gratis", subtitulo: "En compras mayores a $500", cta: "Explorar", ctaHref: "/ofertas", bg: "#0f1923" },
+];
+
+function HeroWidget({ bundleUrl, content, carruselSlides }) {
   const rootRef = useRef(null);
+  const slides = carruselSlides || DEFAULT_SLIDES;
 
   useEffect(() => {
     const el = rootRef.current;
     if (!el || !bundleUrl) return;
 
-    const slides = carruselData.map(s => ({
-      image: s.img,
-      title: s.titulo,
-    }));
-    const data = content?.slides?.length ? content : { slides, autoplay: true };
+    const data = content?.slides?.length ? content : { slides: slides.map(s => ({ image: s.img, title: s.titulo })), autoplay: true };
 
     const script = document.createElement("script");
     script.src = `${API_URL}${bundleUrl}`;
@@ -41,7 +45,8 @@ function HeroWidget({ bundleUrl, content }) {
   return <div ref={rootRef} className="w-full h-screen overflow-hidden" />;
 }
 
-function OriginalHero() {
+function OriginalHero({ carruselSlides }) {
+  const slides = carruselSlides || DEFAULT_SLIDES;
   const shopButtonRef = useRef();
   const containerRef = useRef();
 
@@ -175,7 +180,7 @@ function OriginalHero() {
             allowTouchMove={false}
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
           >
-            {carruselData.map((product, index) => (
+            {slides.map((product, index) => (
               <SwiperSlide key={index} style={{ height: "100%" }}>
                 <img
                   src={product.img}
@@ -232,8 +237,15 @@ function OriginalHero() {
 
 export default function HeroSection() {
   const [widgetData, setWidgetData] = useState(null);
+  const [siteSlides, setSiteSlides] = useState(null);
 
   useEffect(() => {
+    getStoreSettings()
+      .then(data => {
+        const slides = data?.siteContent?.hero?.carouselSlides;
+        if (slides?.length) setSiteSlides(slides);
+      })
+      .catch(() => {});
     if (!API_URL) { setWidgetData(false); return; }
     const url = `${API_URL}/storefront/widget-status/${WIDGET_SLUG}?_=${Date.now()}`;
     fetch(url, { cache: "no-cache" })
@@ -247,8 +259,8 @@ export default function HeroSection() {
   }
 
   if (widgetData) {
-    return <HeroWidget bundleUrl={widgetData.bundleUrl} content={widgetData.content} />;
+    return <HeroWidget bundleUrl={widgetData.bundleUrl} content={widgetData.content} carruselSlides={siteSlides} />;
   }
 
-  return <OriginalHero />;
+  return <OriginalHero carruselSlides={siteSlides} />;
 }

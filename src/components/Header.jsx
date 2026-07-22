@@ -15,7 +15,6 @@ const DEFAULT_NAV = [
   { name: "CONTACTO", href: "/contact", subMenu: [] },
 ];
 
-const API_URL = import.meta.env.VITE_API_URL;
 const activeLinkClasses = "border-zinc-400 font-bold";
 
 const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
@@ -48,27 +47,14 @@ const Header = ({ pageContainerRef, user, onAuthSuccess, onLogout }) => {
             setStoreName([data.storeName, ""]);
           }
         }
+        const sc = data?.siteContent;
+        if (sc) {
+          if (sc.header?.promoBanner) setPromoBanner(sc.header.promoBanner);
+          if (sc.header?.socialLinks?.length) setSocialLinks(sc.header.socialLinks);
+          if (sc.navLinks?.length) setNavLinks(sc.navLinks);
+        }
       })
       .catch(console.error);
-
-    if (API_URL) {
-      fetch(`${API_URL}/storefront/widget-status/header-banner?_=${Date.now()}`, { cache: "no-cache" })
-        .then(r => r.json())
-        .then(data => {
-          if (data.active && data.content) {
-            if (data.content.promoBanner) setPromoBanner(data.content.promoBanner);
-            if (data.content.socialLinks?.length) setSocialLinks(data.content.socialLinks);
-          }
-        })
-        .catch(() => {});
-
-      fetch(`${API_URL}/storefront/widget-status/site-navigation?_=${Date.now()}`, { cache: "no-cache" })
-        .then(r => r.json())
-        .then(data => {
-          if (data.active && data.content?.navLinks?.length) setNavLinks(data.content.navLinks);
-        })
-        .catch(() => {});
-    }
   }, []);
 
   const menuOverlayRef = useRef(null);

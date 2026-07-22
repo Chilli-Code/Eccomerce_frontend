@@ -8,9 +8,9 @@ const TaglineSection = () => {
 
   useEffect(() => {
     if (!API_URL) return;
-    fetch(`${API_URL}/storefront/widget-status/homepage-tagline?_=${Date.now()}`, { cache: "no-cache" })
+    fetch(`${API_URL}/settings`)
       .then(r => r.json())
-      .then(data => { if (data.active && data.content?.text) setText(data.content.text); })
+      .then(data => { if (data?.siteContent?.tagline?.text) setText(data.siteContent.tagline.text); })
       .catch(() => {});
   }, []);
 

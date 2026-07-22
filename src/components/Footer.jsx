@@ -28,9 +28,9 @@ const Footer = () => {
 
   useEffect(() => {
     if (!API_URL) return;
-    fetch(`${API_URL}/storefront/widget-status/site-footer?_=${Date.now()}`, { cache: "no-cache" })
+    fetch(`${API_URL}/settings`)
       .then(r => r.json())
-      .then(data => { if (data.active && data.content) setFooter(data.content); })
+      .then(data => { if (data?.siteContent) setFooter(data.siteContent.footer || {}); })
       .catch(() => {});
   }, []);
 

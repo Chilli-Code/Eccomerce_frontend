@@ -10,11 +10,11 @@ const MissionSection = () => {
 
   useEffect(() => {
     if (!API_URL) return;
-    fetch(`${API_URL}/storefront/widget-status/homepage-mission?_=${Date.now()}`, { cache: "no-cache" })
+    fetch(`${API_URL}/settings`)
       .then(r => r.json())
       .then(data => {
-        if (data.active && data.content) {
-          const m = data.content;
+        const m = data?.siteContent?.mission;
+        if (m) {
           if (m.heading) setHeading(m.heading);
           if (m.image) setImage(m.image);
           if (m.features?.length) setFeatures(m.features);

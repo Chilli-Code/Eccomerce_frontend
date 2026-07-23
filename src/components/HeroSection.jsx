@@ -45,8 +45,18 @@ function HeroWidget({ bundleUrl, content, carruselSlides }) {
   return <div ref={rootRef} className="w-full h-screen overflow-hidden" />;
 }
 
-function OriginalHero({ carruselSlides }) {
-  const slides = carruselSlides || DEFAULT_SLIDES;
+function OriginalHero({ hero }) {
+  const slides = hero?.carouselSlides?.length ? hero.carouselSlides : DEFAULT_SLIDES;
+  const headingLines = (hero?.heading || "EL\nTELÉFONO\nQUE\nMERECES").split("\n");
+  const description = hero?.description || "Dispositivos insignia y accesorios curados, probados por entusiastas. Sin relleno — solo tecnología que vale la pena llevar.";
+  const badge = hero?.badge || "NUEVA TEMPORADA";
+  const ctaText = hero?.ctaText || "VER TODO";
+  const verMasText = hero?.verMasText || "Ver más";
+  const contactText = hero?.contactText || "Contáctanos";
+  const featureCards = hero?.featureCards?.length ? hero.featureCards : [
+    { img: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=300&q=70&fm=webp", tag: "#INSIGNIA" },
+    { img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&q=70&fm=webp", tag: "#INALÁMBRICO" },
+  ];
   const shopButtonRef = useRef();
   const containerRef = useRef();
 
@@ -125,45 +135,33 @@ function OriginalHero({ carruselSlides }) {
         <div className="flex flex-col space-y-4">
           <div className="bg-zinc-900 h-[480px] flex flex-col justify-between p-8 rounded-3xl shadow-sm">
             <h2 className="text-6xl uppercase impact text-white leading-none">
-              EL{" "}
-              <img
-                src="/svg/arrow.svg"
-                alt=""
-                className="inline-block w-40 ml-5"
-              />{" "}
-              <br />
-              TELÉFONO <br /> QUE <br /> MERECES
+              {headingLines.flatMap((line, i) => {
+                const parts = [line];
+                if (i === 0) parts.push(<img key="arrow" src="/svg/arrow.svg" alt="" className="inline-block w-40 ml-5" />);
+                if (i < headingLines.length - 1) parts.push(<br key={`br-${i}`} />);
+                else parts.push(" ");
+                return parts;
+              })}
             </h2>
             <p className="text-zinc-400 max-w-xs">
-              Dispositivos insignia y accesorios curados, probados por entusiastas.
-              Sin relleno — solo tecnología que vale la pena llevar.
+              {description}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="relative h-[230px] bg-zinc-800 rounded-3xl flex items-end p-3 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=300&q=70&fm=webp"
-                alt="Teléfono insignia"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent" />
-              <span className="relative z-10 bg-zinc-900/70 backdrop-blur-sm text-white text-xs font-semibold tracking-widest uppercase px-2 py-1 rounded-full">
-                #INSIGNIA
-              </span>
-            </div>
-
-            <div className="relative h-[230px] bg-zinc-700 rounded-3xl flex items-end p-3 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&q=70&fm=webp"
-                alt="Accesorios inalámbricos"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent" />
-              <span className="relative z-10 bg-zinc-900/70 backdrop-blur-sm text-white text-xs font-semibold tracking-widest uppercase px-2 py-1 rounded-full">
-                #INALÁMBRICO
-              </span>
-            </div>
+            {featureCards.map((card, i) => (
+              <div key={i} className="relative h-[230px] bg-zinc-800 rounded-3xl flex items-end p-3 overflow-hidden">
+                <img
+                  src={card.img}
+                  alt={card.tag}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent" />
+                <span className="relative z-10 bg-zinc-900/70 backdrop-blur-sm text-white text-xs font-semibold tracking-widest uppercase px-2 py-1 rounded-full">
+                  {card.tag}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -195,7 +193,7 @@ function OriginalHero({ carruselSlides }) {
 
           <div className="absolute top-5 left-5 z-10 bg-zinc-900/80 backdrop-blur-sm text-white text-xs font-semibold tracking-widest uppercase px-3 py-1.5 rounded-full flex items-center gap-2">
             <Zap size={12} className="text-yellow-400" />
-            NUEVA TEMPORADA
+            {badge}
           </div>
 
           <button
@@ -211,14 +209,14 @@ function OriginalHero({ carruselSlides }) {
 
           <div className="absolute bottom-4 right-4 z-10 flex space-x-3">
             <button className="group bg-white/90 backdrop-blur-sm cursor-pointer flex items-center gap-3 text-zinc-900 text-xs uppercase pl-4 pr-2 py-1.5 rounded-full hover:bg-zinc-900 hover:text-zinc-50 transition-all duration-200 font-semibold">
-              Ver más
+              {verMasText}
               <span className="size-8 bg-zinc-800 group-hover:bg-zinc-100 rounded-full flex items-center justify-center">
                 <ArrowDown size={14} className="text-zinc-50 group-hover:text-zinc-800" />
               </span>
             </button>
 
             <a href="/contact" className="border border-zinc-50/60 group backdrop-blur-sm cursor-pointer flex items-center gap-3 text-zinc-50 text-xs uppercase pl-4 pr-2 py-1.5 rounded-full hover:bg-zinc-900 transition-all duration-200 font-semibold">
-              Contáctanos
+              {contactText}
               <span className="size-8 bg-zinc-50 rounded-full flex items-center justify-center">
                 <Mail size={14} className="text-zinc-800" />
               </span>
@@ -227,7 +225,7 @@ function OriginalHero({ carruselSlides }) {
         </div>
 
         <div className="w-full lg:hidden bg-zinc-900 text-white uppercase p-4 flex items-center justify-center rounded-full font-bold tracking-widest text-sm">
-          VER TODO
+          {ctaText}
         </div>
 
       </div>
@@ -237,13 +235,13 @@ function OriginalHero({ carruselSlides }) {
 
 export default function HeroSection() {
   const [widgetData, setWidgetData] = useState(null);
-  const [siteSlides, setSiteSlides] = useState(null);
+  const [heroContent, setHeroContent] = useState(null);
 
   useEffect(() => {
     getStoreSettings()
       .then(data => {
-        const slides = data?.siteContent?.hero?.carouselSlides;
-        if (slides?.length) setSiteSlides(slides);
+        const hero = data?.siteContent?.hero;
+        if (hero && Object.keys(hero).length > 0) setHeroContent(hero);
       })
       .catch(() => {});
     if (!API_URL) { setWidgetData(false); return; }
@@ -259,8 +257,8 @@ export default function HeroSection() {
   }
 
   if (widgetData) {
-    return <HeroWidget bundleUrl={widgetData.bundleUrl} content={widgetData.content} carruselSlides={siteSlides} />;
+    return <HeroWidget bundleUrl={widgetData.bundleUrl} content={widgetData.content} carruselSlides={heroContent?.carouselSlides} />;
   }
 
-  return <OriginalHero carruselSlides={siteSlides} />;
+  return <OriginalHero hero={heroContent} />;
 }
